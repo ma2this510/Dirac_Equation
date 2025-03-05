@@ -1,6 +1,13 @@
 module bspline_mod
     implicit none
 
+    private
+
+    public :: init_bspine
+    public :: fusion_coef
+    public :: print_table
+    public :: int_overlp
+
     contains
 
     function fusion_coef(coef1, coef2)
@@ -104,7 +111,7 @@ module bspline_mod
             print *, "------------------------------------------------------------------"
             print *, "for node", i_tmp, knot(i_tmp), "<= x < ", knot(i_tmp+1)
             do j_tmp=1, d
-                print *, "x^", d - j_tmp + 1, " : ", table(i_tmp, j_tmp)
+                print *, "x^", d - j_tmp, " : ", table(i_tmp, j_tmp)
             end do
         end do
 
@@ -126,27 +133,32 @@ module bspline_mod
 
         allocate(total(s, size(table, 2)))
 
+        total = 0.0
+
         do i=1, size(table, 1)
             total(index(i), :) = total(index(i), :) + table(i, :)
         end do
 
     end function calcul_double
 
-    subroutine init_bspine(d, i, knot)
+    subroutine init_bspine(d, i, knot, result, display)
         !> @brief Main function to calculate the B-spline coefficients.
         !> @warning The degree and the index are the Mathematica values + 1
         !> @param d : integer : the degree of the B-spline
         !> @param i : integer : the index of the B-spline
         !> @param knot : real(:) : the knot vector
+        !> @param result : real(:,:) : the final coef of the B-spline
+        !> @param display : logical : display the result
         implicit none
         integer, intent(in) :: d, i
         real, intent(in) :: knot(:)
+        real, intent(inout), dimension(size(knot), d) :: result
+        logical, intent(in) :: display
 
         real, dimension(1) :: table
         integer :: sol_int
         real, dimension(2**(d-1), d) :: tot
         integer, dimension(2**(d-1)) :: index
-        real, dimension(size(knot), d) :: result
 
         if (d == 1) then
             print *, "The degree of the B-spline must be greater than 1"
@@ -166,23 +178,39 @@ module bspline_mod
 
         result = calcul_double(tot, index, size(knot))
 
-        call print_table(d, knot, result)
+        if (display) then
+            call print_table(d, knot, result)
+        end if
 
     end subroutine init_bspine
 
+    subroutine int_overlp(b1, b2, knot, result)
+        implicit none
+        real, intent(in), dimension(:, :) :: b1, b2
+        real, intent(in) :: knot(:)
+        real, intent(out), dimension(size(b1, 1), 2*size(b1, 2)) :: result
+
+        integer :: i_tmp, j_tmp
+        real, dimension(:, :), allocatable :: produit, primitive
+
+        allocate(produit(size(b1, 1), 2*size(b1, 2)-1))
+        allocate(primitive(size(b1, 1), 2*size(b1, 2)))
+
+        produit = 0.0
+        primitive = 0.0
+
+        do i_tmp=1, size(b1, 1)
+            produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
+            primitive(i_tmp, 1:2*size(b1, 2)-1) = produit(i_tmp, :)
+
+        end do
+
+        do j_tmp=1, size(primitive, 2) - 1
+            primitive(:, j_tmp) = primitive(:, j_tmp) / (size(primitive, 2) - j_tmp)
+        end do
+
+        result = primitive
+
+    end subroutine int_overlp
+
 end module bspline_mod
-
-program main
-    use bspline_mod
-    implicit none
-
-    integer :: i, d
-    real, dimension(7) :: knot
-
-    d = 6 ! Order of Mathemathica + 1
-    i = 1 ! Index of Mathemathica + 1
-    knot = [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0]
-
-    call init_bspine(d, i, knot)
-    
-end program main
