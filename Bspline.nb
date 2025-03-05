@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[   1051658,      19321]
-NotebookOptionsPosition[   1044517,      19188]
-NotebookOutlinePosition[   1044947,      19205]
-CellTagsIndexPosition[   1044904,      19202]
+NotebookDataLength[   1052717,      19355]
+NotebookOptionsPosition[   1045676,      19223]
+NotebookOutlinePosition[   1046106,      19240]
+CellTagsIndexPosition[   1046063,      19237]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -19133,11 +19133,11 @@ Cell[BoxData[
   RowBox[{"BSplineBasis", "[", 
    RowBox[{
     RowBox[{"{", 
-     RowBox[{"7", ",", 
+     RowBox[{"5", ",", 
       RowBox[{"{", 
        RowBox[{
        "0.0", ",", "0.0", ",", "0.0", ",", "0.0", ",", "0.5", ",", "1.0", ",",
-         "1.0"}], "}"}]}], "}"}], ",", " ", "1", ",", " ", "r"}], "]"}], " ", 
+         "1.0"}], "}"}]}], "}"}], ",", " ", "0", ",", " ", "r"}], "]"}], " ", 
   "//", " ", "PiecewiseExpand"}]], "Input",
  CellChangeTimes->{{3.9500721094852333`*^9, 3.950072109748538*^9}, {
   3.950072170890802*^9, 3.950072202733233*^9}, {3.950154282552969*^9, 
@@ -19145,43 +19145,78 @@ Cell[BoxData[
   3.9501579802991877`*^9, 3.950157980600024*^9}, {3.950158646548751*^9, 
   3.950158653613873*^9}, {3.950158690757635*^9, 3.950158713994294*^9}, {
   3.9501590419510117`*^9, 3.9501590424258413`*^9}, {3.9501591101353607`*^9, 
-  3.950159112636045*^9}},
+  3.950159112636045*^9}, {3.950160449442978*^9, 3.950160489568969*^9}},
  CellLabel->
-  "In[312]:=",ExpressionUUID->"d30ddfaf-c3f8-4152-865e-c25ae34a7702"],
+  "In[316]:=",ExpressionUUID->"d30ddfaf-c3f8-4152-865e-c25ae34a7702"],
 
 Cell[BoxData[
- TemplateBox[{
-  "BSplineBasis", "knotslen", 
-   "\"Length of knot sequence \\!\\(\\*RowBox[{\\\"{\\\", \
-RowBox[{\\\"0.`\\\", \\\",\\\", \\\"0.`\\\", \\\",\\\", \\\"0.`\\\", \
-\\\",\\\", \\\"0.`\\\", \\\",\\\", \\\"0.5`\\\", \\\",\\\", \\\"1.`\\\", \
-\\\",\\\", \\\"1.`\\\"}], \\\"}\\\"}]\\) should be greater than or equal to \
-\\!\\(\\*RowBox[{\\\"9\\\"}]\\).\"", 2, 312, 57, 18121360395220602288, 
-   "Local"},
-  "MessageTemplate",
-  BaseStyle->"MSG"]], "Message",
- CellChangeTimes->{3.950159042940881*^9, 3.950159113029187*^9},
- CellLabel->
-  "During evaluation of \
-In[312]:=",ExpressionUUID->"a7fe24d5-aa16-4348-be35-ae0da9f7059a"],
-
-Cell[BoxData[
- RowBox[{"BSplineBasis", "[", 
-  RowBox[{
-   RowBox[{"{", 
-    RowBox[{"7", ",", 
-     RowBox[{"{", 
-      RowBox[{
-      "0.`", ",", "0.`", ",", "0.`", ",", "0.`", ",", "0.5`", ",", "1.`", ",",
-        "1.`"}], "}"}]}], "}"}], ",", "1", ",", "r"}], "]"}]], "Output",
+ TagBox[GridBox[{
+    {"\[Piecewise]", GridBox[{
+       {
+        RowBox[{
+         RowBox[{"20.`", " ", 
+          SuperscriptBox["r", "2"]}], "-", 
+         RowBox[{"80.`", " ", 
+          SuperscriptBox["r", "3"]}], "+", 
+         RowBox[{"110.`", " ", 
+          SuperscriptBox["r", "4"]}], "-", 
+         RowBox[{"52.`", " ", 
+          SuperscriptBox["r", "5"]}]}], 
+        RowBox[{"0.`", "\[LessEqual]", "r", "<", "0.5`"}]},
+       {
+        RowBox[{
+         RowBox[{"-", "2.`"}], "+", 
+         RowBox[{"20.`", " ", "r"}], "-", 
+         RowBox[{"60.`", " ", 
+          SuperscriptBox["r", "2"]}], "+", 
+         RowBox[{"80.`", " ", 
+          SuperscriptBox["r", "3"]}], "-", 
+         RowBox[{"50.`", " ", 
+          SuperscriptBox["r", "4"]}], "+", 
+         RowBox[{"12.`", " ", 
+          SuperscriptBox["r", "5"]}]}], 
+        RowBox[{"0.5`", "\[LessEqual]", "r", "\[LessEqual]", "1.`"}]},
+       {"0", 
+        TagBox["True",
+         "PiecewiseDefault",
+         AutoDelete->True]}
+      },
+      AllowedDimensions->{2, Automatic},
+      Editable->True,
+      GridBoxAlignment->{"Columns" -> {{Left}}, "Rows" -> {{Baseline}}},
+      GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{1.}}},
+      GridBoxSpacings->{"Columns" -> {
+          Offset[0.27999999999999997`], {
+           Offset[0.84]}, 
+          Offset[0.27999999999999997`]}, "Rows" -> {
+          Offset[0.2], {
+           Offset[0.4]}, 
+          Offset[0.2]}},
+      Selectable->True]}
+   },
+   GridBoxAlignment->{"Columns" -> {{Left}}, "Rows" -> {{Baseline}}},
+   GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{1.}}},
+   GridBoxSpacings->{"Columns" -> {
+       Offset[0.27999999999999997`], {
+        Offset[0.35]}, 
+       Offset[0.27999999999999997`]}, "Rows" -> {
+       Offset[0.2], {
+        Offset[0.4]}, 
+       Offset[0.2]}}],
+  "Piecewise",
+  DeleteWithContents->True,
+  Editable->False,
+  SelectWithContents->True,
+  Selectable->False,
+  StripWrapperBoxes->True]], "Output",
  CellChangeTimes->{
   3.950072136275797*^9, 3.9500721713980103`*^9, 3.950072202909771*^9, {
    3.950154292098702*^9, 3.950154295233019*^9}, 3.950154328601322*^9, 
    3.950157981032333*^9, {3.950158625857826*^9, 3.9501586538358173`*^9}, {
    3.950158691229191*^9, 3.950158714465843*^9}, 3.950159042960169*^9, 
-   3.950159113056205*^9},
+   3.950159113056205*^9, {3.950160451542334*^9, 3.950160492616741*^9}},
  CellLabel->
-  "Out[312]=",ExpressionUUID->"feb55e80-71b3-4efc-ae98-0834ed2cbcb3"]
+  "Out[316]=",ExpressionUUID->"f93b04ff-4114-4b4c-9859-d596edd58cec"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
@@ -19317,9 +19352,8 @@ Cell[1038757, 19038, 861, 18, 30, "Input",ExpressionUUID->"b196151c-226b-4c96-87
 Cell[1039621, 19058, 2570, 67, 143, "Output",ExpressionUUID->"375aab03-d69e-4f53-8b7d-2e62a2630470"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1042228, 19130, 892, 19, 30, "Input",ExpressionUUID->"d30ddfaf-c3f8-4152-865e-c25ae34a7702"],
-Cell[1043123, 19151, 652, 14, 26, "Message",ExpressionUUID->"a7fe24d5-aa16-4348-be35-ae0da9f7059a"],
-Cell[1043778, 19167, 699, 16, 34, "Output",ExpressionUUID->"feb55e80-71b3-4efc-ae98-0834ed2cbcb3"]
+Cell[1042228, 19130, 938, 19, 30, "Input",ExpressionUUID->"d30ddfaf-c3f8-4152-865e-c25ae34a7702"],
+Cell[1043169, 19151, 2467, 67, 88, "Output",ExpressionUUID->"f93b04ff-4114-4b4c-9859-d596edd58cec"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]

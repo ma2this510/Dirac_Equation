@@ -49,8 +49,6 @@ module bspline_mod
 
         real, dimension(:), allocatable :: res1, res2
 
-        print *, "BSpline Calculating coef for d=", d, "& i=", i
-
         denum1 = knot(i + d - 1) - knot(i)
         denum2 = knot(i + d) - knot(i + 1)
 
@@ -74,9 +72,6 @@ module bspline_mod
 
         res1 = fusion_coef(table, coef1)
         res2 = fusion_coef(table, coef2)
-
-        print *, "Result 1 : ", res1
-        print *, "Result 2 : ", res2
         
         if (d > 2) then
             call rec_coef(d-1, i, knot, res1, sol_int, tot, index)
@@ -85,19 +80,19 @@ module bspline_mod
             sol_int = sol_int + 1
             index(sol_int) = i
             tot(sol_int, :) = res1
-
-            print *, "Result for sol_int=", sol_int, " : ", res1
             
             sol_int = sol_int + 1
             index(sol_int) = i + 1
             tot(sol_int, :) = res2
-
-            print *, "Result for sol_int=",sol_int, " : ", res2
         end if
 
     end subroutine rec_coef
 
     subroutine print_table(d , knot, table)
+        !> @brief Print the polynome between each node of a given spline
+        !> @param d : integer : the degree of the B-spline
+        !> @param knot : real(:) : the knot vector
+        !> @param table : real(:,:) : the coef of the B-spline
         implicit none
         integer, intent(in) :: d
         real, intent(in) :: knot(:)
@@ -116,6 +111,11 @@ module bspline_mod
     end subroutine print_table
 
     function calcul_double(table, index, s) result(total)
+        !> @brief Sum the different branch linked to the same internal node and return the final coefs per node
+        !> @param table : real(:,:) : the un-proccessed coef of the B-spline
+        !> @param index : integer(:) : the index of the current contribution
+        !> @param s : integer : the number of nodes
+        !> @return total : real(:,:) : the proccesed coef of the B-spline
         implicit none
         real, intent(in) :: table(:, :)
         integer, intent(in) :: index(:)
@@ -133,6 +133,11 @@ module bspline_mod
     end function calcul_double
 
     subroutine init_bspine(d, i, knot)
+        !> @brief Main function to calculate the B-spline coefficients.
+        !> @warning The degree and the index are the Mathematica values + 1
+        !> @param d : integer : the degree of the B-spline
+        !> @param i : integer : the index of the B-spline
+        !> @param knot : real(:) : the knot vector
         implicit none
         integer, intent(in) :: d, i
         real, intent(in) :: knot(:)
@@ -142,6 +147,14 @@ module bspline_mod
         real, dimension(2**(d-1), d) :: tot
         integer, dimension(2**(d-1)) :: index
         real, dimension(size(knot), d) :: result
+
+        if (d == 1) then
+            print *, "The degree of the B-spline must be greater than 1"
+            stop
+        else if (i + d > size(knot)) then
+            print *, "For the given degree and index, the knot vector needs to be at least of size ", i + d
+            stop
+        end if
 
         table = 0.0
         table(1) = 1.0
@@ -166,8 +179,8 @@ program main
     integer :: i, d
     real, dimension(7) :: knot
 
-    d = 5 ! Order of Mathemathica + 1
-    i = 2 ! Index of Mathemathica + 1
+    d = 6 ! Order of Mathemathica + 1
+    i = 1 ! Index of Mathemathica + 1
     knot = [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0]
 
     call init_bspine(d, i, knot)
