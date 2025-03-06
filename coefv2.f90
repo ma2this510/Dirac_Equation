@@ -7,6 +7,7 @@ module bspline_mod
     public :: fusion_coef
     public :: print_table
     public :: int_overlp
+    public :: exp_knot
 
     contains
 
@@ -188,7 +189,9 @@ module bspline_mod
         implicit none
         real, intent(in), dimension(:, :) :: b1, b2
         real, intent(in) :: knot(:)
-        real, intent(out), dimension(size(b1, 1), 2*size(b1, 2)) :: result
+        real, intent(out) :: result
+        real, dimension(size(b1, 1)) :: int_per_knot
+        real :: int_init, int_final
 
         integer :: i_tmp, j_tmp
         real, dimension(:, :), allocatable :: produit, primitive
@@ -209,8 +212,32 @@ module bspline_mod
             primitive(:, j_tmp) = primitive(:, j_tmp) / (size(primitive, 2) - j_tmp)
         end do
 
-        result = primitive
+        do i_tmp=1, size(b1, 1)-1
+            int_init = 0.0
+            int_final = 0.0
+            do j_tmp=1, size(primitive, 2) - 1
+                int_init = int_init + primitive(i_tmp, j_tmp) * knot(i_tmp)**(size(primitive, 2) - j_tmp)
+                int_final = int_final + primitive(i_tmp, j_tmp) * knot(i_tmp+1)**(size(primitive, 2) - j_tmp)
+            end do
+            int_per_knot(i_tmp) = int_final - int_init
+        end do
+
+        do i_tmp=1, size(b1, 1)
+            result = result + int_per_knot(i_tmp)
+        end do
 
     end subroutine int_overlp
 
+    function exp_knot(n, a_max, a_min) result(result)
+        integer, intent(in) :: n
+        real, intent(in) :: a_max, a_min
+        real, dimension(n) :: result
+
+        integer :: i_tmp
+
+        do i_tmp = 1, n
+            result(i_tmp) = a_min * (a_max / a_min)**((real(i_tmp - 1) / real(n - 1)))
+        end do
+
+    end function exp_knot
 end module bspline_mod

@@ -1,76 +1,47 @@
-! program main
-!     use bspline_mod
-!     implicit none
-
-!     integer :: d, n
-!     integer, allocatable :: i(:)
-!     real, dimension(16) :: knot
-!     real, dimension(:, :, :), allocatable :: result
-!     real, dimension(:, :), allocatable :: primitive
-
-!     integer :: i_tmp
-
-!     d = 4 ! Order of Mathemathica + 1
-!     n = size(knot) - d - 3
-
-!     knot = [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 6.0, 9.0, 12.0, 15.0, 15.0, 15.0, 15.0]
-
-!     allocate(i(n))
-!     i = [(i_tmp, i_tmp = 1, n)]
-
-!     allocate(result(n, size(knot), d))
-
-!     do i_tmp = 1, n
-!         print *, i_tmp
-!         call init_bspine(d, i(i_tmp), knot, result(i_tmp, :, :), .false.)
-!     end do
-
-!     call print_table(d, knot, result(1, :, :))
-!     call print_table(d, knot, result(2, :, :))
-
-!     allocate(primitive(size(result, 2), 2*size(result, 3)))
-
-!     call int_overlp(result(1, :, :), result(2, :, :), knot, primitive)
-
-!     call print_table(2*d, knot, primitive)
-    
-! end program main
-
 program main
     use bspline_mod
     implicit none
 
-    integer :: d
-    real, dimension(16) :: knot
-    real, dimension(:, :), allocatable :: b1, b2
+    integer :: d, n, i_tmp, j_tmp
+    integer, dimension(:), allocatable :: i_range
+    real, dimension(:), allocatable :: knot
+    real, dimension(:, :, :), allocatable :: bspline
 
-    real, dimension(:, :), allocatable :: result
+    real, dimension(:,:), allocatable :: ovrlp_mat
+    real :: result
 
-    d = 4 ! Order of Mathemathica + 1
+    d = 7 ! Order of Mathemathica + 1
+    n = 40
+    allocate(knot(n + d + 3))
 
-    knot = [0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 6.0, 9.0, 12.0, 15.0, 15.0, 15.0, 15.0]
+    knot = exp_knot(size(knot), 10.0, 0.1)
 
-    allocate(b1(size(knot), d))
-    allocate(b2(size(knot), d))
+    allocate(i_range(n))
+    i_range = [(i_tmp, i_tmp = 1, n)]
 
-    allocate(result(size(b1, 1), 2*size(b1, 2)))
+    allocate(bspline(i_range(n), size(knot), d))
 
-    call init_bspine(d, 2, knot, b1, .false.)
+    do i_tmp = 1, n
+        call init_bspine(d, i_range(i_tmp), knot, bspline(i_tmp, :, :), .false.)
+    end do
 
-    call init_bspine(d, 3, knot, b2, .false.)
+    print *, "Number of BSplines: ", n
+    print *, "Order of BSplines: ", d, " and number of knots: ", size(knot)
+    print *, "Knots: "
+    write(*, 10) knot
+    print *, "----------------------------------------------------------------"
+    print *, "BSplines Overlaps : "
 
-    print *, "B-Spline number 1"
-    print *, "-----------------"
-    call print_table(d, knot, b1)
+    allocate(ovrlp_mat(n,n))
 
-    print *, "B-Spline number 2"
-    print *, "-----------------"
-    call print_table(d, knot, b2)
-
-    call int_overlp(b1, b2, knot, result)
-
-    print *, "Primitive"
-    print *, "---------"
-    call print_table(2*d, knot, result)
+    do i_tmp = 1, n
+        do j_tmp = 1, n
+            result = 0.0
+            call int_overlp(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, result)
+            ovrlp_mat(i_tmp, j_tmp) = result
+        end do
+        write(*, 10) ovrlp_mat(i_tmp, :)
+        10 format(50f7.1)
+    end do
 
 end program main
