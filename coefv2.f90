@@ -8,6 +8,9 @@ module bspline_mod
    public :: print_table
    public :: int_overlp
    public :: exp_knot
+   public :: int_deriv
+   public :: int_potential
+   public :: boundary_cond
 
 contains
 
@@ -96,26 +99,37 @@ contains
 
    end subroutine rec_coef
 
-   subroutine print_table(d, knot, table)
+   subroutine print_table(d, knot, table, file)
       !> @brief Print the polynome between each node of a given spline
       !> @param d : integer : the degree of the B-spline
       !> @param knot : real(:) : the knot vector
       !> @param table : real(:,:) : the coef of the B-spline
+      !> @param file : integer : the file to write the result
       implicit none
       integer, intent(in) :: d
       real, intent(in) :: knot(:)
       real, intent(in), dimension(size(knot), d) :: table
+      integer, intent(in), optional :: file
 
       integer :: i_tmp, j_tmp
 
-      do i_tmp = 1, size(knot) - 1
-         print *, "------------------------------------------------------------------"
-         print *, "for node", i_tmp, knot(i_tmp), "<= x < ", knot(i_tmp + 1)
-         do j_tmp = 1, d
-            print *, "x^", d - j_tmp, " : ", table(i_tmp, j_tmp)
+      if (present(file)) then
+         do i_tmp = 1, size(knot) - 1
+            write (file, *) "------------------------------------------------------------------"
+            write (file, *) "for node", i_tmp, knot(i_tmp), "<= x < ", knot(i_tmp + 1)
+            do j_tmp = 1, d
+               write (file, *) "x^", d - j_tmp, " : ", table(i_tmp, j_tmp)
+            end do
          end do
-      end do
-
+      else
+         do i_tmp = 1, size(knot) - 1
+            print *, "------------------------------------------------------------------"
+            print *, "for node", i_tmp, knot(i_tmp), "<= x < ", knot(i_tmp + 1)
+            do j_tmp = 1, d
+               print *, "x^", d - j_tmp, " : ", table(i_tmp, j_tmp)
+            end do
+         end do
+      end if
    end subroutine print_table
 
    function calcul_double(table, index, s) result(total)
@@ -186,6 +200,11 @@ contains
    end subroutine init_bspine
 
    subroutine int_overlp(b1, b2, knot, result)
+      !> @brief Calculate the integral of the product of two B-splines
+      !> @param b1 : real(:,:) : the coef of the first B-spline
+      !> @param b2 : real(:,:) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param result : real : the result of the integral
       implicit none
       real, intent(in), dimension(:, :) :: b1, b2
       real, intent(in) :: knot(:)
@@ -202,17 +221,17 @@ contains
       produit = 0.0
       primitive = 0.0
 
-      do i_tmp = 1, size(b1, 1)
+      do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
          produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
          primitive(i_tmp, 1:2*size(b1, 2) - 1) = produit(i_tmp, :)
 
       end do
 
-      do j_tmp = 1, size(primitive, 2) - 1
+      do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
          primitive(:, j_tmp) = primitive(:, j_tmp)/(size(primitive, 2) - j_tmp)
       end do
 
-      do i_tmp = 1, size(b1, 1) - 1
+      do i_tmp = 1, size(b1, 1) - 1 ! Loop over the number of B-splines
          int_init = 0.0
          int_final = 0.0
          do j_tmp = 1, size(primitive, 2) - 1
@@ -222,6 +241,7 @@ contains
          int_per_knot(i_tmp) = int_final - int_init
       end do
 
+      result = 0.0
       do i_tmp = 1, size(b1, 1)
          result = result + int_per_knot(i_tmp)
       end do
@@ -229,6 +249,11 @@ contains
    end subroutine int_overlp
 
    function exp_knot(n, a_max, a_min) result(result)
+      !> @brief Generate a knot vector with exponential distribution
+      !> @param n : integer : the number of knots
+      !> @param a_max : real : the maximum value of the knot vector
+      !> @param a_min : real : the minimum value of the knot vector
+      !> @return result : real(n) : the knot vector
       integer, intent(in) :: n
       real, intent(in) :: a_max, a_min
       real, dimension(n) :: result
@@ -240,4 +265,120 @@ contains
       end do
 
    end function exp_knot
+
+   function deriv(b1) result(result)
+      !> @brief Calculate the derivative of a B-spline
+      !> @param b1 : real(size(knot),d) : the coef of the B-spline
+      !> @return result : real(size(knot),d-1) : the coef of the derivative of the B-spline
+      real, intent(in) :: b1(:, :)
+      real, dimension(size(b1, 1), size(b1, 2)) :: result
+
+      integer :: i_tmp
+
+      result = 0.0
+      result(:, 2:size(b1, 2) - 1) = b1(:, 1:size(b1, 2) - 1)
+
+      do i_tmp = 1, size(b1, 1)
+         result(i_tmp, :) = result(i_tmp, :)*(size(b1, 2) - [(i_tmp - 1, i_tmp=1, size(b1, 2))])
+      end do
+   end function deriv
+
+   subroutine int_deriv(b1, b2, knot, result)
+      !> @brief Calculate the integral of the product of a B-spline and the derivative of another B-spline
+      !> @param b1 : real(:,:) : the coef of the first B-spline
+      !> @param b2 : real(:,:) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param result : real : the result of the integral
+      implicit none
+      real, intent(in), dimension(:, :) :: b1, b2
+      real, intent(in) :: knot(:)
+      real, intent(out) :: result
+
+      call int_overlp(b1, deriv(b2), knot, result)
+
+   end subroutine int_deriv
+
+   subroutine int_potential(b1, b2, Z, knot, result)
+      !> @brief Calculate the integral of the product of a B-spline and the potential of another B-spline
+      !> @param b1 : real(:,:) : the coef of the first B-spline
+      !> @param b2 : real(:,:) : the coef of the second B-spline
+      !> @param Z : real : the potential
+      !> @param knot : real(:) : the knot vector
+      !> @param result : real : the result of the integral
+      implicit none
+      real, intent(in), dimension(:, :) :: b1, b2
+      real, intent(in) :: Z
+      real, intent(in) :: knot(:)
+      real, intent(out) :: result
+      real, dimension(size(b1, 1)) :: int_per_knot
+      real :: int_init, int_final
+
+      integer :: i_tmp, j_tmp
+      real, dimension(:, :), allocatable :: produit, primitive
+
+      allocate (produit(size(b1, 1), 2*size(b1, 2) - 1))
+      allocate (primitive(size(b1, 1), 2*size(b1, 2) - 1))
+
+      produit = 0.0
+      primitive = 0.0
+
+      do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
+         produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
+      end do
+
+      primitive = produit
+
+      do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
+         ! Remove the last order (x^-1) as there is no factor in front of it
+         primitive(:, j_tmp) = primitive(:, j_tmp)/(size(primitive, 2) - j_tmp)
+      end do
+
+      do i_tmp = 1, size(b1, 1) - 1 ! Loop over the number of B-splines
+         int_init = 0.0
+         int_final = 0.0
+         do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
+            int_init = int_init + primitive(i_tmp, j_tmp)*knot(i_tmp)**(size(primitive, 2) - j_tmp)
+            int_final = int_final + primitive(i_tmp, j_tmp)*knot(i_tmp + 1)**(size(primitive, 2) - j_tmp)
+         end do
+         ! Integrate the last order (x^-1) to log(x)
+         int_init = int_init + primitive(i_tmp, size(primitive, 2) )*log(knot(i_tmp))
+         int_final = int_final + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp + 1))
+         int_per_knot(i_tmp) = int_final - int_init
+      end do
+
+      result = 0.0
+      do i_tmp = 1, size(b1, 1)
+         result = result + int_per_knot(i_tmp)
+      end do
+
+      result = -Z*result
+
+   end subroutine int_potential
+
+   subroutine boundary_cond(n, C, kappa, aprime)
+      !> @brief Calculate the boundary conditions
+      !> @param n : integer : the number of B-splines
+      !> @param C : real : speed of light
+      !> @param kappa : real : Relativistic quantum number
+      !> @param aprime : real(n,n) : the boundary condition
+      implicit none
+      integer, intent(in) :: n
+      real, intent(in) :: C, kappa
+      real, intent(out) :: aprime(2*n, 2*n)
+
+      aprime = 0.0
+      if (kappa > 0.0) then
+         aprime(1, 1) = 2*C**2
+         aprime(1, n+1) = -C/2
+         aprime(n+1, 1) = -C/2
+         aprime(n, n) = C/2
+         aprime(2*n, 2*n) = -C/2
+      else if (kappa < 0.0) then
+         aprime(1, 1) = C
+         aprime(1, n+1) = -C/2
+         aprime(n+1, 1) = -C/2
+         aprime(n, n) = C/2
+         aprime(2*n, 2*n) = -C/2
+      end if
+   end subroutine boundary_cond
 end module bspline_mod
