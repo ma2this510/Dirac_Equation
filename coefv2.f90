@@ -11,6 +11,7 @@ module bspline_mod
    public :: int_deriv
    public :: int_potential
    public :: boundary_cond
+   public :: matrixAB
 
 contains
 
@@ -381,4 +382,136 @@ contains
          aprime(2*n, 2*n) = -C/2
       end if
    end subroutine boundary_cond
+
+   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, A, B, log)
+      !> @brief Generate the matrix A and B
+      !> @param d : integer : the degree of the B-spline
+      !> @param n : integer : the number of B-splines
+      !> @param Z : real : the potential constant
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light
+      !> @param amin : real : the minimum value of the knot vector
+      !> @param amax : real : the maximum value of the knot vector
+      !> @param A : real(2n,2n) : the matrix A
+      !> @param B : real(2n,2n) : the matrix B
+      !> @param log : logical : display the result
+      implicit none
+      integer, intent(in) :: d, n
+      real, intent(in) :: Z, kappa, C, amin, amax
+      real, intent(out), allocatable, dimension(:, :) :: A, B
+      logical, intent(in), optional :: log
+
+      integer :: nprime
+
+      real, dimension(n+d) :: knot
+      real, dimension(n, size(knot), d) :: bspline
+
+      real, dimension(n, n) :: ovrlp_mat, deriv_mat, potential_mat, k_mat
+      real, allocatable, dimension(:, :) :: aprime_mat
+
+      integer :: i_tmp, j_tmp
+
+      ! Number of B-splines without the first and last one
+      nprime = n-2
+
+      ! Generate the knot vector
+      knot = exp_knot(n + d, amax, amin)
+
+      ! Generate the B-splines
+      do i_tmp = 1, n
+         call init_bspine(d, i_tmp, knot, bspline(i_tmp, :, :), .false.)
+      end do
+
+      ! Generate the overlap matrix
+      do i_tmp = 1, n
+         do j_tmp = 1, n
+            call int_overlp(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
+         end do
+      end do
+
+      ! Generate the derivative matrix
+      do i_tmp = 1, n
+         do j_tmp = 1, n
+            call int_deriv(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, deriv_mat(i_tmp, j_tmp))
+         end do
+      end do
+
+      ! Generate the potential matrix
+      do i_tmp = 1, n
+         do j_tmp = 1, n
+            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+         end do
+      end do
+
+      ! Generate K matrix
+      do i_tmp = 1, n
+         do j_tmp = 1, n
+            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
+         end do
+      end do
+
+      ! Generate the boundary condition matrix
+      allocate (aprime_mat(2*nprime, 2*nprime))
+      call boundary_cond(nprime, C, kappa, aprime_mat)
+
+      ! Generate the matrix A
+      allocate (A(2*nprime, 2*nprime))
+      A = 0.0
+      A(1:nprime, 1:nprime) = potential_mat(2:n-1, 2:n-1)
+      A(1:nprime, nprime+1:2*nprime) = C * (deriv_mat(2:n-1, 2:n-1) + k_mat(2:n-1, 2:n-1))
+      A(nprime+1:2*nprime, 1:nprime) = -C * (deriv_mat(2:n-1, 2:n-1) + k_mat(2:n-1, 2:n-1))
+      A(nprime+1:2*nprime, nprime+1:2*nprime) = potential_mat(2:n-1, 2:n-1) - 2*(C**2) * ovrlp_mat(2:n-1, 2:n-1)
+      A = A + aprime_mat
+
+      ! Generate the matrix B
+      allocate (B(2*nprime, 2*nprime))
+      B = 0.0
+      B(1:nprime, 1:nprime) = ovrlp_mat(2:n-1, 2:n-1)
+      B(nprime+1:2*nprime, nprime+1:2*nprime) = ovrlp_mat(2:n-1, 2:n-1)
+
+      if (present(log)) then
+         open(1, file="log_2.txt", status="replace")
+10       format(500f15.8)
+         write (1,'(a,i4)') "Number of BSplines: ", n
+         write (1,'(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
+         write (1,'(a)') "Knots: "
+         write (1, 10) knot
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "BSplines Overlaps Matrix : "
+         do i_tmp = 1, n
+            write (1, 10) ovrlp_mat(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "BSplines Derivatives Matrix : "
+         do i_tmp = 1, n
+            write (1, 10) deriv_mat(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "BSplines Potentials Matrix : "
+         do i_tmp = 1, n
+            write (1, 10) potential_mat(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "K/r Matrix : "
+         do i_tmp = 1, n
+            write (1, 10) k_mat(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "Boundary Condition Matrix : "
+         do i_tmp = 1, 2*nprime
+            write (1, 10) aprime_mat(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "Matrix A : "
+         do i_tmp = 1, 2*nprime
+            write (1, 10) A(i_tmp, :)
+         end do
+         write (1,'(a)') "----------------------------------------------------------------"
+         write (1,'(a)') "Matrix B : "
+         do i_tmp = 1, 2*nprime
+            write (1, 10) B(i_tmp, :)
+         end do
+         close(1)
+      end if
+   end subroutine matrixAB
 end module bspline_mod

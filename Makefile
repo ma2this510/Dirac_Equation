@@ -1,6 +1,6 @@
 FC = gfortran
-FFLAGS = -O3 -fopenmp -ffast-math -march=native -fdefault-real-8
-DEBUG_FLAGS = -Wall -Og -g -fdefault-real-8
+FFLAGS = -llapack -lblas -O3 -fopenmp -ffast-math -march=native -fdefault-real-8
+DEBUG_FLAGS = -llapack -lblas -Wall -Og -g -fdefault-real-8
 
 MARG = Makefile
 
