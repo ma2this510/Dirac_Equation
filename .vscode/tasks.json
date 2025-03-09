@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "compile debug",
+            "type": "shell",
+            "command": "gfortran",
+            "args": [
+                "-g",
+                "-Wall",
+                "-fdefault-real-8",
+                "main.f90"
+            ],
+            "options": {
+                "cdw": "${workspaceRoot}"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "compile all",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "build"
+            ],
+            "options": {
+                "cdw": "${workspaceRoot}"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "compile debug",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "debug"
+            ],
+            "options": {
+                "cdw": "${workspaceRoot}"
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
+    }
