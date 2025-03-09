@@ -224,6 +224,7 @@ contains
 
       produit = mpreal(0.d0)
       primitive = mpreal(0.d0)
+      int_per_knot = mpreal(0.d0)
 
       do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
          produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
@@ -331,6 +332,7 @@ contains
 
       produit = mpreal(0.d0)
       primitive = mpreal(0.d0)
+      int_per_knot = mpreal(0.d0)
 
       do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
          produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
@@ -411,9 +413,6 @@ contains
          str_tmp = ""
          call mpfform(r1s(i_tmp), i2, i3, str_tmp)
          write (i1, '(a)', advance='no') str_tmp
-         if (i_tmp < size(r1s)) then
-            write (i1, '(a)', advance='no') ", "
-         end if
       end do
       write (i1, *)  ! End the line after the list is printed
 
@@ -536,7 +535,8 @@ contains
 
       print *, "Done"
 
-      if (present(log_bool)) then
+      if (present(log_bool) .and. log_bool) then
+         print *, "Writing Logs"
          open (1, file="log_2.txt", status="replace")
 
          write (1, '(a,i4)') "Number of BSplines: ", n
@@ -546,7 +546,7 @@ contains
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Overlaps Matrix : "
          do i_tmp = 1, n
-            call write_lists(ovrlp_mat(i_tmp, :), 1, 20, 5)
+            call write_lists(ovrlp_mat(i_tmp, :), 1, 20, 5) ! This is where the Segmentation fault occurs from valgrind
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Derivatives Matrix : "
@@ -579,6 +579,7 @@ contains
             call write_lists(B(i_tmp, :), 1, 20, 5)
          end do
          close (1)
+         print *, "Logs written"
       end if
    end subroutine matrixAB
 end module bspline_mod
