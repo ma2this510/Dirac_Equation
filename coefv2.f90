@@ -276,20 +276,18 @@ contains
    function deriv(b1) result(result)
       !> @brief Calculate the derivative of a B-spline
       !> @param b1 : real(size(knot),d) : the coef of the B-spline
-      !> @return result : real(size(knot),d-1) : the coef of the derivative of the B-spline
+      !> @return result : real(size(knot),d) : the coef of the derivative of the B-spline
       type(mp_real), intent(in) :: b1(:, :)
       type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: result
 
       integer :: i_tmp, j_tmp, k_tmp
 
       result = mpreal(0.d0)
-      result(:, 2:size(b1, 2) - 1) = b1(:, 1:size(b1, 2) - 2) ! need to check
+      result(:, 2:size(b1, 2)) = b1(:, 1:size(b1, 2) - 1) ! need to check
 
       do i_tmp = 1, size(b1, 1)
          do j_tmp = 1, size(b1, 2)
-            do k_tmp = 1, size(b1, 2)
-               result(i_tmp, j_tmp) = result(i_tmp, j_tmp)*(size(b1, 2) - k_tmp)
-            end do
+            result(i_tmp, j_tmp) = result(i_tmp, j_tmp)*(size(b1, 2) - j_tmp + 1)
          end do
       end do
    end function deriv
@@ -361,7 +359,7 @@ contains
       end do
 
       result = mpreal(0.d0)
-      do i_tmp = 1, size(b1, 1)
+      do i_tmp = 1, size(b1, 1)-1
          result = result + int_per_knot(i_tmp)
       end do
 
@@ -411,7 +409,7 @@ contains
 
       do i_tmp = 1, size(r1s)
          str_tmp = ""
-         call mpfform(r1s(i_tmp), i2, i3, str_tmp)
+         call mpeform(r1s(i_tmp), i2, i3, str_tmp)
          write (i1, '(a)', advance='no') str_tmp
       end do
       write (i1, *)  ! End the line after the list is printed
@@ -542,41 +540,41 @@ contains
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
          write (1, '(a)') "Knots: "
-         call write_lists(knot, 1, 20, 5)
+         call write_lists(knot, 1, 25, 5)
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Overlaps Matrix : "
          do i_tmp = 1, n
-            call write_lists(ovrlp_mat(i_tmp, :), 1, 20, 5) ! This is where the Segmentation fault occurs from valgrind
+            call write_lists(ovrlp_mat(i_tmp, :), 1, 25, 5) ! This is where the Segmentation fault occurs from valgrind
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Derivatives Matrix : "
          do i_tmp = 1, n
-            call write_lists(deriv_mat(i_tmp, :), 1, 20, 5)
+            call write_lists(deriv_mat(i_tmp, :), 1, 25, 5)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Potentials Matrix : "
          do i_tmp = 1, n
-            call write_lists(potential_mat(i_tmp, :), 1, 20, 5)
+            call write_lists(potential_mat(i_tmp, :), 1, 25, 5)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "K/r Matrix : "
          do i_tmp = 1, n
-            call write_lists(k_mat(i_tmp, :), 1, 20, 5)
+            call write_lists(k_mat(i_tmp, :), 1, 25, 5)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Boundary Condition Matrix : "
          do i_tmp = 1, 2*nprime
-            call write_lists(aprime_mat(i_tmp, :), 1, 20, 5)
+            call write_lists(aprime_mat(i_tmp, :), 1, 25, 5)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix A : "
          do i_tmp = 1, 2*nprime
-            call write_lists(A(i_tmp, :), 1, 20, 5)
+            call write_lists(A(i_tmp, :), 1, 25, 5)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix B : "
          do i_tmp = 1, 2*nprime
-            call write_lists(B(i_tmp, :), 1, 20, 5)
+            call write_lists(B(i_tmp, :), 1, 25, 5)
          end do
          close (1)
          print *, "Logs written"
