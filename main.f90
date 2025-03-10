@@ -10,15 +10,15 @@ program main
 
    !----------------------------------------------------------------
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
-   n = 6 ! Number of B-Splines
+   d = 10 ! Order of Mathemathica + 1
+   n = 100 ! Number of B-Splines
    Z = mpreal(2.d0)
-   C = mpreal(137d0) ! check CODATA 1986
+   C = mpreal(137.035989d0) ! check CODATA 1986
    kappa = mpreal(-1.d0)
-   amin = mpreal(0.1d0)
-   amax = mpreal(10.d0)
+   amin = mpreal(0.00001d0)
+   amax = mpreal(40.d0)
 
-   nprime = n - 2
+   nprime = n - 4
    allocate (A(2*nprime, 2*nprime))
    allocate (B(2*nprime, 2*nprime))
 
@@ -41,7 +41,7 @@ program main
    open (2, file='eigenvalues.dat', status='replace')
 
    do i_tmp = 1, 2*nprime
-      call mpwrite(2, 30, 10, w(i_tmp))
+      call mpwrite(2, 35, 15, w(2*nprime - i_tmp + 1))
    end do
    
    close (2)

@@ -255,20 +255,26 @@ contains
 
    end subroutine int_overlp
 
-   function exp_knot(n, a_max, a_min) result(result)
+   function exp_knot(n, a_max, a_min, d) result(result)
       !> @brief Generate a knot vector with exponential distribution
       !> @param n : integer : the number of knots
       !> @param a_max : mp_real : the maximum value of the knot vector
       !> @param a_min : mp_real : the minimum value of the knot vector
+      !> @param d : integer : the degree of the B-spline
       !> @return result : mp_real(n) : the knot vector
-      integer, intent(in) :: n
+      integer, intent(in) :: n, d
       type(mp_real), intent(in) :: a_max, a_min
       type(mp_real), dimension(n) :: result
 
       integer :: i_tmp
-
-      do i_tmp = 1, n
-         result(i_tmp) = a_min*(a_max/a_min)**mpreal((dble(i_tmp - 1)/dble(n - 1)))
+      do i_tmp = 1, d
+         result(i_tmp) = mpreal(0.d0)
+      end do
+      do i_tmp = d + 1, n - d + 1
+         result(i_tmp) = a_min*(a_max/a_min)**mpreal((dble(i_tmp - (d + 1))/dble(n - 2*d)))
+      end do
+      do i_tmp = n - d + 2, n
+         result(i_tmp) = a_max
       end do
 
    end function exp_knot
@@ -353,13 +359,15 @@ contains
             int_final = int_final + primitive(i_tmp, j_tmp)*knot(i_tmp + 1)**(size(primitive, 2) - j_tmp)
          end do
          ! Integrate the last order (x^-1) to log(x)
-         int_init = int_init + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp))
-         int_final = int_final + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp + 1))
+         if (primitive(i_tmp, size(primitive, 2)) /= mpreal(0.d0)) then
+            int_init = int_init + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp))
+            int_final = int_final + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp + 1))
+         end if
          int_per_knot(i_tmp) = int_final - int_init
       end do
 
       result = mpreal(0.d0)
-      do i_tmp = 1, size(b1, 1)-1
+      do i_tmp = 1, size(b1, 1) - 1
          result = result + int_per_knot(i_tmp)
       end do
 
@@ -439,17 +447,17 @@ contains
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
 
-      type(mp_real), dimension(n, n) :: ovrlp_mat, deriv_mat, potential_mat, k_mat
+      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat
       type(mp_real), allocatable, dimension(:, :) :: aprime_mat
 
       integer :: i_tmp, j_tmp
 
-      ! Number of B-splines without the first and last one
-      nprime = n - 2
+      ! Number of B-splines without the two first and last one
+      nprime = n - 4
 
       ! Generate the knot vector
       print *, "Generate the knot vector"
-      knot = exp_knot(n + d, amax, amin)
+      knot = exp_knot(n + d, amax, amin, d)
 
       ! Generate the B-splines
       print *, "Generate the B-splines"
@@ -461,40 +469,44 @@ contains
 
       ! Generate the overlap matrix
       print *, "Generate the overlap matrix"
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, n)
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_overlp(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
+      allocate (ovrlp_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_overlp(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
       ! Generate the derivative matrix
       print *, "Generate the derivative matrix"
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, n)
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_deriv(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, deriv_mat(i_tmp, j_tmp))
+      allocate (deriv_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_deriv(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, deriv_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
       ! Generate the potential matrix
       print *, "Generate the potential matrix"
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, n)
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+      allocate (potential_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
       ! Generate K matrix
       print *, "Generate the K matrix"
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, kappa, knot, k_mat, n)
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
+      allocate (k_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, kappa, knot, k_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -508,13 +520,13 @@ contains
       print *, "Generate the matrix A"
       allocate (A(2*nprime, 2*nprime))
       A = mpreal(0.d0)
-      A(1:nprime, 1:nprime) = potential_mat(2:n - 1, 2:n - 1)
+      A(1:nprime, 1:nprime) = potential_mat
 
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            A(i_tmp, nprime + j_tmp) = C*(deriv_mat(i_tmp + 1, j_tmp + 1) + k_mat(i_tmp + 1, j_tmp + 1))
-            A(nprime + i_tmp, j_tmp) = -C*(deriv_mat(i_tmp + 1, j_tmp + 1) + k_mat(i_tmp + 1, j_tmp + 1))
-            A(nprime + i_tmp, nprime + j_tmp) = potential_mat(i_tmp + 1, j_tmp + 1) - 2*(C**2)*ovrlp_mat(i_tmp + 1, j_tmp + 1)
+            A(i_tmp, nprime + j_tmp) = C*(deriv_mat(i_tmp, j_tmp) - k_mat(i_tmp, j_tmp))
+            A(nprime + i_tmp, j_tmp) = -C*(deriv_mat(i_tmp, j_tmp) + k_mat(i_tmp, j_tmp))
+            A(nprime + i_tmp, nprime + j_tmp) = potential_mat(i_tmp, j_tmp) - 2*(C**2)*ovrlp_mat(i_tmp, j_tmp)
          end do
       end do
 
@@ -528,8 +540,8 @@ contains
       print *, "Generate the matrix B"
       allocate (B(2*nprime, 2*nprime))
       B = mpreal(0.d0)
-      B(1:nprime, 1:nprime) = ovrlp_mat(2:n - 1, 2:n - 1)
-      B(nprime + 1:2*nprime, nprime + 1:2*nprime) = ovrlp_mat(2:n - 1, 2:n - 1)
+      B(1:nprime, 1:nprime) = ovrlp_mat
+      B(nprime + 1:2*nprime, nprime + 1:2*nprime) = ovrlp_mat
 
       print *, "Done"
 
@@ -540,41 +552,41 @@ contains
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
          write (1, '(a)') "Knots: "
-         call write_lists(knot, 1, 25, 5)
+         call write_lists(knot, 1, 35, 15)
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Overlaps Matrix : "
-         do i_tmp = 1, n
-            call write_lists(ovrlp_mat(i_tmp, :), 1, 25, 5) ! This is where the Segmentation fault occurs from valgrind
+         do i_tmp = 1, nprime
+            call write_lists(ovrlp_mat(i_tmp, :), 1, 35, 15) ! This is where the Segmentation fault occurs from valgrind
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Derivatives Matrix : "
-         do i_tmp = 1, n
-            call write_lists(deriv_mat(i_tmp, :), 1, 25, 5)
+         do i_tmp = 1, nprime
+            call write_lists(deriv_mat(i_tmp, :), 1, 35, 15)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines Potentials Matrix : "
-         do i_tmp = 1, n
-            call write_lists(potential_mat(i_tmp, :), 1, 25, 5)
+         do i_tmp = 1, nprime
+            call write_lists(potential_mat(i_tmp, :), 1, 35, 15)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "K/r Matrix : "
-         do i_tmp = 1, n
-            call write_lists(k_mat(i_tmp, :), 1, 25, 5)
+         do i_tmp = 1, nprime
+            call write_lists(k_mat(i_tmp, :), 1, 35, 15)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Boundary Condition Matrix : "
          do i_tmp = 1, 2*nprime
-            call write_lists(aprime_mat(i_tmp, :), 1, 25, 5)
+            call write_lists(aprime_mat(i_tmp, :), 1, 35, 15)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix A : "
          do i_tmp = 1, 2*nprime
-            call write_lists(A(i_tmp, :), 1, 25, 5)
+            call write_lists(A(i_tmp, :), 1, 35, 15)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix B : "
          do i_tmp = 1, 2*nprime
-            call write_lists(B(i_tmp, :), 1, 25, 5)
+            call write_lists(B(i_tmp, :), 1, 35, 15)
          end do
          close (1)
          print *, "Logs written"
