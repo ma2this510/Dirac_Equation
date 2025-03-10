@@ -453,7 +453,7 @@ contains
 
       ! Generate the B-splines
       print *, "Generate the B-splines"
-      !OMP PARALLEL DO
+      !OMP PARALLEL DO PRIVATE(i_tmp) SHARED(d, knot, bspline, n)
       do i_tmp = 1, n
          call init_bspine(d, i_tmp, knot, bspline(i_tmp, :, :), .false.)
       end do
@@ -461,43 +461,43 @@ contains
 
       ! Generate the overlap matrix
       print *, "Generate the overlap matrix"
-      !OMP PARALLEL DO
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, n)
       do i_tmp = 1, n
          do j_tmp = 1, n
             call int_overlp(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
          end do
       end do
-      !OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 
       ! Generate the derivative matrix
       print *, "Generate the derivative matrix"
-      !OMP PARALLEL DO
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, n)
       do i_tmp = 1, n
          do j_tmp = 1, n
             call int_deriv(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, deriv_mat(i_tmp, j_tmp))
          end do
       end do
-      !OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 
       ! Generate the potential matrix
       print *, "Generate the potential matrix"
-      !OMP PARALLEL DO
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, n)
       do i_tmp = 1, n
          do j_tmp = 1, n
             call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
          end do
       end do
-      !OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 
       ! Generate K matrix
       print *, "Generate the K matrix"
-      !OMP PARALLEL DO
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, kappa, knot, k_mat, n)
       do i_tmp = 1, n
          do j_tmp = 1, n
             call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
          end do
       end do
-      !OMP END PARALLEL DO
+      !$OMP END PARALLEL DO
 
       ! Generate the boundary condition matrix
       print *, "Generate the boundary condition matrix"

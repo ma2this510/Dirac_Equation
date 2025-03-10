@@ -10,12 +10,12 @@ program main
 
    !----------------------------------------------------------------
    ! Define Important Variables
-   d = 9 ! Order of Mathemathica + 1
-   n = 80 ! Number of B-Splines
+   d = 4 ! Order of Mathemathica + 1
+   n = 6 ! Number of B-Splines
    Z = mpreal(2.d0)
-   C = mpreal(137.036d0) ! check CODATA 1986
+   C = mpreal(137d0) ! check CODATA 1986
    kappa = mpreal(-1.d0)
-   amin = mpreal(0.002d0)
+   amin = mpreal(0.1d0)
    amax = mpreal(10.d0)
 
    nprime = n - 2
