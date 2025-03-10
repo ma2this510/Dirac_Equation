@@ -280,7 +280,7 @@ contains
       type(mp_real), intent(in) :: b1(:, :)
       type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: result
 
-      integer :: i_tmp, j_tmp, k_tmp
+      integer :: i_tmp, j_tmp
 
       result = mpreal(0.d0)
       result(:, 2:size(b1, 2)) = b1(:, 1:size(b1, 2) - 1) ! need to check

@@ -13,7 +13,7 @@ program main
    d = 7 ! Order of Mathemathica + 1
    n = 40 ! Number of B-Splines
    Z = mpreal(1.d0)
-   C = mpreal(137.d0)
+   C = mpreal(137.036d0) ! check CODATA 1986
    kappa = mpreal(-1.d0)
    amin = mpreal(0.1d0)
    amax = mpreal(10.d0)
@@ -69,6 +69,7 @@ program main
    print *, 'Working'
    do iter = 1, 2*nprime
       call invsg(avec, bvec, 2*nprime, w, work, eps, 0, maxit, wa)
+      print *, "Eigenvalue", iter
       call mpwrite(2, 30, 10, w)
    end do
    close (1)

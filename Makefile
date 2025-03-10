@@ -40,7 +40,7 @@ second.o : second.f90
 
 mpfun : mpfuna.o mpfunb.o mpfunc.o mpfund.o mpfune.o mpfunf.o mpfung1.o mpfunh1.o mpmodule.o mpmask13.o second.o
 
-# EigenSolver part
+# EigenSolver part old
 
 invsg.o : invsg.f90
 	$(FC) $(FFLAGS) -c invsg.f90
