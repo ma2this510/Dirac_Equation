@@ -1,69 +1,66 @@
 program main
+   use mpmodule
    use bspline_mod
    implicit none
 
-   integer :: d, n, i_tmp, nprime
-   real :: amin, amax, Z, C, kappa
-   real, dimension(:, :), allocatable :: A, B
-   real, dimension(:), allocatable :: w, work
-
-   integer :: itype, lda, ldb, lwork, info
-   character(1) :: jobz, uplo
-
+   integer :: d, n, nprime, i_tmp, ierr
+   type(mp_real) :: amin, amax, Z, C, kappa, clt
+   type(mp_real), dimension(:, :), allocatable :: A, B, vect
+   type(mp_real), dimension(:), allocatable :: w, fv1, fv2
 
    !----------------------------------------------------------------
    ! Define Important Variables
-   d = 7 ! Order of Mathemathica + 1
-   n = 100 ! Number of B-Splines
-   Z = 2.0
-   C = 137
-   kappa = -1.0
-   amin = 0.002
-   amax = 40.0
+   d = 8 ! Order of Mathemathica + 1
+   n = 40 ! Number of B-Splines
+   Z = '2.d0'
+   C = '137.035989d0' ! check CODATA 1986
+   kappa = '-1.d0'
+   amin = '2.d-3'
+   amax = '4.d1'
+   clt = '1.66d1' ! Clustering factor
 
-   nprime = n - 2
-   allocate(A(2*nprime, 2*nprime), B(2*nprime, 2*nprime), w(2*nprime))
+   nprime = n - 4
+   allocate (A(2*nprime, 2*nprime))
+   allocate (B(2*nprime, 2*nprime))
 
    !----------------------------------------------------------------
    ! Generate A and B matrices
-   call matrixAB(d, n, Z, kappa, C, amin, amax, A, B, .true.)
-
-!    do i_tmp = 1, 2*n
-!       print *, A(i_tmp, 1:2*n)
-!    end do
-
-!    do i_tmp = 1, 2*n
-!       print *, B(i_tmp, 1:2*n)
-!    end do
+   call matrixAB(d, n, Z, kappa, C, amin, amax, clt, A, B, .true., 40, 20)
 
    !----------------------------------------------------------------
    ! Get Eigenvalues
 
-   ! LAPACK parameters
-   itype = 1      ! Solves A*x = lambda*B*x
-   jobz = 'N'     ! Compute eigenvalues and eigenvectors
-   uplo = 'U'     ! Upper triangular part is stored
-   lda = 2*nprime      ! Leading dimension of A
-   ldb = 2*nprime      ! Leading dimension of B
+   print *, 'Calculating Eigenvalues'
 
-   ! Get optimal workspace size
-   lwork = -1
-   allocate(work(1))
-   call dsygv(itype, jobz, uplo, 2*nprime, A, lda, B, ldb, W, work, lwork, info)
+   allocate (w(2*nprime))
+   allocate (fv1(2*nprime))
+   allocate (fv2(2*nprime))
+   allocate (vect(2*nprime, 2*nprime))
 
-   ! Compute Eigenvalues
-   lwork = int(work(1))
-   deallocate(work)
-   allocate(work(lwork))
-   call dsygv(itype, jobz, uplo, 2*nprime, A, lda, B, ldb, W, work, lwork, info)
+   call rsg(2*nprime, 2*nprime, A, B, w, 0, vect, fv1, fv2, ierr)
 
-   ! Save Eigenvalues
-   open(1, file='eigenvalues.dat', status='replace')
+   open (2, file='eigenvalues.dat', status='replace')
+
    do i_tmp = 1, 2*nprime
-      write(1, '(f25.8)') W(i_tmp)
+      call mpwrite(2, 35, 15, w(2*nprime - i_tmp + 1))
    end do
-   close(1)
+   
+   close (2)
 
-   deallocate(A, B, w, work)
+   deallocate (A, B, fv1, fv2, w, vect)
+
+   print *, 'Done'
 
 end program main
+
+function epsilonn(alpha)
+   !> @brief Calculate the machine epsilon
+   !> @param alpha The value to calculate the machine epsilon
+   USE mpmodule
+   implicit type(mp_real) (a - h, o - z)
+
+   ten = '10.d0'
+   epsilonn = ten**(-mpipl)
+
+   return
+end function epsilonn

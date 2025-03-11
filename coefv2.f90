@@ -1,5 +1,8 @@
 module bspline_mod
+   use mpmodule
    implicit none
+
+   type(mp_real), save :: zero, one
 
    private
 
@@ -21,12 +24,12 @@ contains
       !> @param coef1 : real(:) : the coef of the first polynom by increasing order
       !> @param coef2 : real(:) : the coef of the second polynom by increasing order
       !> @return fusion_coef : real(:) : the coef of the product of the two polynoms by increasing order
-      real, intent(in) :: coef1(:), coef2(:)
-      real :: fusion_coef(size(coef1) + size(coef2) - 1)
+      type(mp_real), intent(in) :: coef1(:), coef2(:)
+      type(mp_real) :: fusion_coef(size(coef1) + size(coef2) - 1)
 
       integer :: s1, s2, i, j
 
-      fusion_coef = 0.0
+      fusion_coef = zero
 
       s1 = size(coef1)
       s2 = size(coef2)
@@ -50,31 +53,31 @@ contains
       !> @param index : integer : the index of the current B-spline
 
       integer, intent(in) :: d, i
-      real, intent(in), dimension(:) :: knot
-      real, intent(in), dimension(:) :: table
-      real, intent(out), dimension(:, :) :: tot
+      type(mp_real), intent(in), dimension(:) :: knot
+      type(mp_real), intent(in), dimension(:) :: table
+      type(mp_real), intent(out), dimension(:, :) :: tot
       integer, intent(out) :: sol_int
       integer, intent(out), dimension(:) :: index
 
-      real :: coef1(2), coef2(2)
-      real :: denum1, denum2
+      type(mp_real) :: coef1(2), coef2(2)
+      type(mp_real) :: denum1, denum2
 
-      real, dimension(:), allocatable :: res1, res2
+      type(mp_real), dimension(:), allocatable :: res1, res2
 
       denum1 = knot(i + d - 1) - knot(i)
       denum2 = knot(i + d) - knot(i + 1)
 
-      if (denum1 == 0.0) then
-         coef1(1) = 0.0
-         coef1(2) = 0.0
+      if (denum1 == zero) then
+         coef1(1) = zero
+         coef1(2) = zero
       else
          coef1(1) = 1/denum1
          coef1(2) = -knot(i)/denum1
       end if
 
-      if (denum2 == 0.0) then
-         coef2(1) = 0.0
-         coef2(2) = 0.0
+      if (denum2 == zero) then
+         coef2(1) = zero
+         coef2(2) = zero
       else
          coef2(1) = -1/denum2
          coef2(2) = knot(i + d)/denum2
@@ -108,8 +111,8 @@ contains
       !> @param file : integer : the file to write the result
       implicit none
       integer, intent(in) :: d
-      real, intent(in) :: knot(:)
-      real, intent(in), dimension(size(knot), d) :: table
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(in), dimension(size(knot), d) :: table
       integer, intent(in), optional :: file
 
       integer :: i_tmp, j_tmp
@@ -140,19 +143,21 @@ contains
       !> @param s : integer : the number of nodes
       !> @return total : real(:,:) : the proccesed coef of the B-spline
       implicit none
-      real, intent(in) :: table(:, :)
+      type(mp_real), intent(in) :: table(:, :)
       integer, intent(in) :: index(:)
       integer, intent(in) :: s
-      real, allocatable :: total(:, :)
+      type(mp_real), allocatable :: total(:, :)
 
-      integer :: i
+      integer :: i, j
 
       allocate (total(s, size(table, 2)))
 
-      total = 0.0
+      total = zero
 
       do i = 1, size(table, 1)
-         total(index(i), :) = total(index(i), :) + table(i, :)
+         do j = 1, size(table, 2)
+            total(index(i), j) = total(index(i), j) + table(i, j)
+         end do
       end do
 
    end function calcul_double
@@ -162,19 +167,22 @@ contains
       !> @warning The degree and the index are the Mathematica values + 1
       !> @param d : integer : the degree of the B-spline
       !> @param i : integer : the index of the B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param result : real(:,:) : the final coef of the B-spline
+      !> @param knot : mp_real(:) : the knot vector
+      !> @param result : mp_real(:,:) : the final coef of the B-spline
       !> @param display : logical : display the result
       implicit none
       integer, intent(in) :: d, i
-      real, intent(in) :: knot(:)
-      real, intent(inout), dimension(size(knot), d) :: result
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(inout), dimension(size(knot), d) :: result
       logical, intent(in) :: display
 
-      real, dimension(1) :: table
+      type(mp_real), dimension(1) :: table
       integer :: sol_int
-      real, dimension(2**(d - 1), d) :: tot
+      type(mp_real), dimension(2**(d - 1), d) :: tot
       integer, dimension(2**(d - 1)) :: index
+
+      zero = '0.d0'
+      one = '1.d0'
 
       if (d == 1) then
          print *, "The degree of the B-spline must be greater than 1"
@@ -184,10 +192,10 @@ contains
          stop
       end if
 
-      table = 0.0
-      table(1) = 1.0
+      table = zero
+      table(1) = one
       sol_int = 0
-      tot = 0.0
+      tot = zero
       index = 0
 
       call rec_coef(d, i, knot, table, sol_int, tot, index)
@@ -207,20 +215,24 @@ contains
       !> @param knot : real(:) : the knot vector
       !> @param result : real : the result of the integral
       implicit none
-      real, intent(in), dimension(:, :) :: b1, b2
-      real, intent(in) :: knot(:)
-      real, intent(out) :: result
-      real, dimension(size(b1, 1)) :: int_per_knot
-      real :: int_init, int_final
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+      type(mp_real), dimension(size(b1, 1)) :: int_per_knot
+      type(mp_real) :: int_init, int_final
 
       integer :: i_tmp, j_tmp
-      real, dimension(:, :), allocatable :: produit, primitive
+      type(mp_real), dimension(:, :), allocatable :: produit, primitive
+
+      zero = '0.d0'
+      one = '1.d0'
 
       allocate (produit(size(b1, 1), 2*size(b1, 2) - 1))
       allocate (primitive(size(b1, 1), 2*size(b1, 2)))
 
-      produit = 0.0
-      primitive = 0.0
+      produit = zero
+      primitive = zero
+      int_per_knot = zero
 
       do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
          produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
@@ -229,12 +241,14 @@ contains
       end do
 
       do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
-         primitive(:, j_tmp) = primitive(:, j_tmp)/(size(primitive, 2) - j_tmp)
+         do i_tmp = 1, size(primitive, 1)
+            primitive(i_tmp, j_tmp) = primitive(i_tmp, j_tmp)/(size(primitive, 2) - j_tmp)
+         end do
       end do
 
       do i_tmp = 1, size(b1, 1) - 1 ! Loop over the number of B-splines
-         int_init = 0.0
-         int_final = 0.0
+         int_init = zero
+         int_final = zero
          do j_tmp = 1, size(primitive, 2) - 1
             int_init = int_init + primitive(i_tmp, j_tmp)*knot(i_tmp)**(size(primitive, 2) - j_tmp)
             int_final = int_final + primitive(i_tmp, j_tmp)*knot(i_tmp + 1)**(size(primitive, 2) - j_tmp)
@@ -242,27 +256,38 @@ contains
          int_per_knot(i_tmp) = int_final - int_init
       end do
 
-      result = 0.0
+      result = zero
       do i_tmp = 1, size(b1, 1)
          result = result + int_per_knot(i_tmp)
       end do
 
    end subroutine int_overlp
 
-   function exp_knot(n, a_max, a_min) result(result)
+   function exp_knot(n, a_max, a_min, d, clt) result(result)
       !> @brief Generate a knot vector with exponential distribution
       !> @param n : integer : the number of knots
-      !> @param a_max : real : the maximum value of the knot vector
-      !> @param a_min : real : the minimum value of the knot vector
-      !> @return result : real(n) : the knot vector
-      integer, intent(in) :: n
-      real, intent(in) :: a_max, a_min
-      real, dimension(n) :: result
+      !> @param a_max : mp_real : the maximum value of the knot vector
+      !> @param a_min : mp_real : the minimum value of the knot vector
+      !> @param d : integer : the degree of the B-spline
+      !> @param clt : mp_real : the clustering factor
+      !> @return result : mp_real(n) : the knot vector
+      integer, intent(in) :: n, d
+      type(mp_real), intent(in) :: a_max, a_min, clt
+      type(mp_real), dimension(n) :: result
 
       integer :: i_tmp
+      zero = '0.d0'
+      one = '1.d0'
 
-      do i_tmp = 1, n
-         result(i_tmp) = a_min*(a_max/a_min)**((real(i_tmp - 1)/real(n - 1)))
+      do i_tmp = 1, d
+         result(i_tmp) = zero
+      end do
+      do i_tmp = d + 1, n - d + 1
+         ! result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1)*one)/(n - 2*d)*one))
+         result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp-d)/(n-2*d+1))-1)/(exp(clt)-1)
+      end do
+      do i_tmp = n - d + 2, n
+         result(i_tmp) = a_max
       end do
 
    end function exp_knot
@@ -270,17 +295,22 @@ contains
    function deriv(b1) result(result)
       !> @brief Calculate the derivative of a B-spline
       !> @param b1 : real(size(knot),d) : the coef of the B-spline
-      !> @return result : real(size(knot),d-1) : the coef of the derivative of the B-spline
-      real, intent(in) :: b1(:, :)
-      real, dimension(size(b1, 1), size(b1, 2)) :: result
+      !> @return result : real(size(knot),d) : the coef of the derivative of the B-spline
+      type(mp_real), intent(in) :: b1(:, :)
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: result
 
-      integer :: i_tmp
+      integer :: i_tmp, j_tmp
 
-      result = 0.0
-      result(:, 2:size(b1, 2) - 1) = b1(:, 1:size(b1, 2) - 1)
+      zero = '0.d0'
+      one = '1.d0'
+
+      result = zero
+      result(:, 2:size(b1, 2)) = b1(:, 1:size(b1, 2) - 1) ! need to check
 
       do i_tmp = 1, size(b1, 1)
-         result(i_tmp, :) = result(i_tmp, :)*(size(b1, 2) - [(i_tmp - 1, i_tmp=1, size(b1, 2))])
+         do j_tmp = 1, size(b1, 2)
+            result(i_tmp, j_tmp) = result(i_tmp, j_tmp)*(size(b1, 2) - j_tmp + 1)
+         end do
       end do
    end function deriv
 
@@ -291,9 +321,9 @@ contains
       !> @param knot : real(:) : the knot vector
       !> @param result : real : the result of the integral
       implicit none
-      real, intent(in), dimension(:, :) :: b1, b2
-      real, intent(in) :: knot(:)
-      real, intent(out) :: result
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
 
       call int_overlp(b1, deriv(b2), knot, result)
 
@@ -307,21 +337,25 @@ contains
       !> @param knot : real(:) : the knot vector
       !> @param result : real : the result of the integral
       implicit none
-      real, intent(in), dimension(:, :) :: b1, b2
-      real, intent(in) :: Z
-      real, intent(in) :: knot(:)
-      real, intent(out) :: result
-      real, dimension(size(b1, 1)) :: int_per_knot
-      real :: int_init, int_final
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+      type(mp_real), dimension(size(b1, 1)) :: int_per_knot
+      type(mp_real) :: int_init, int_final
 
       integer :: i_tmp, j_tmp
-      real, dimension(:, :), allocatable :: produit, primitive
+      type(mp_real), dimension(:, :), allocatable :: produit, primitive
 
       allocate (produit(size(b1, 1), 2*size(b1, 2) - 1))
       allocate (primitive(size(b1, 1), 2*size(b1, 2) - 1))
 
-      produit = 0.0
-      primitive = 0.0
+      zero = '0.d0'
+      one = '1.d0'
+
+      produit = zero
+      primitive = zero
+      int_per_knot = zero
 
       do i_tmp = 1, size(b1, 1) ! Loop over the number of B-splines
          produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
@@ -331,24 +365,28 @@ contains
 
       do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
          ! Remove the last order (x^-1) as there is no factor in front of it
-         primitive(:, j_tmp) = primitive(:, j_tmp)/(size(primitive, 2) - j_tmp)
+         do i_tmp = 1, size(primitive, 1)
+            primitive(i_tmp, j_tmp) = primitive(i_tmp, j_tmp)/(size(primitive, 2) - j_tmp)
+         end do
       end do
 
       do i_tmp = 1, size(b1, 1) - 1 ! Loop over the number of B-splines
-         int_init = 0.0
-         int_final = 0.0
+         int_init = zero
+         int_final = zero
          do j_tmp = 1, size(primitive, 2) - 1 ! Loop over the different orders
             int_init = int_init + primitive(i_tmp, j_tmp)*knot(i_tmp)**(size(primitive, 2) - j_tmp)
             int_final = int_final + primitive(i_tmp, j_tmp)*knot(i_tmp + 1)**(size(primitive, 2) - j_tmp)
          end do
          ! Integrate the last order (x^-1) to log(x)
-         int_init = int_init + primitive(i_tmp, size(primitive, 2) )*log(knot(i_tmp))
-         int_final = int_final + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp + 1))
+         if (primitive(i_tmp, size(primitive, 2)) /= zero) then
+            int_init = int_init + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp))
+            int_final = int_final + primitive(i_tmp, size(primitive, 2))*log(knot(i_tmp + 1))
+         end if
          int_per_knot(i_tmp) = int_final - int_init
       end do
 
-      result = 0.0
-      do i_tmp = 1, size(b1, 1)
+      result = zero
+      do i_tmp = 1, size(b1, 1) - 1
          result = result + int_per_knot(i_tmp)
       end do
 
@@ -364,154 +402,221 @@ contains
       !> @param aprime : real(n,n) : the boundary condition
       implicit none
       integer, intent(in) :: n
-      real, intent(in) :: C, kappa
-      real, intent(out) :: aprime(2*n, 2*n)
+      type(mp_real), intent(in) :: C, kappa
+      type(mp_real), intent(out) :: aprime(2*n, 2*n)
 
-      aprime = 0.0
-      if (kappa > 0.0) then
+      zero = '0.d0'
+      one = '1.d0'
+
+      aprime = zero
+      if (kappa > zero) then
          aprime(1, 1) = 2*C**2
-         aprime(1, n+1) = -C/2
-         aprime(n+1, 1) = -C/2
+         aprime(1, n + 1) = -C/2
+         aprime(n + 1, 1) = -C/2
          aprime(n, n) = C/2
          aprime(2*n, 2*n) = -C/2
-      else if (kappa < 0.0) then
+      else if (kappa < zero) then
          aprime(1, 1) = C
-         aprime(1, n+1) = -C/2
-         aprime(n+1, 1) = -C/2
+         aprime(1, n + 1) = -C/2
+         aprime(n + 1, 1) = -C/2
          aprime(n, n) = C/2
          aprime(2*n, 2*n) = -C/2
       end if
    end subroutine boundary_cond
 
-   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, A, B, log)
+   subroutine write_lists(r1s, i1, i2, i3)
+      !> @brief Write a list of mp_real
+      !> @param r1s : mp_real(:) : the list of mp_real
+      !> @param i1 : integer : the unit number
+      !> @param i2 : integer : the field width
+      !> @param i3 : integer : the number of decimal
+      implicit none
+      integer, intent(in) :: i1, i2, i3
+      type(mp_real), intent(in), dimension(:) :: r1s
+
+      character(i2) :: str_tmp(1)
+      integer :: i_tmp
+
+      do i_tmp = 1, size(r1s)
+         str_tmp = ""
+         call mpeform(r1s(i_tmp), i2, i3, str_tmp)
+         write (i1, '(a)', advance='no') str_tmp
+      end do
+      write (i1, *)  ! End the line after the list is printed
+
+   end subroutine write_lists
+
+   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, clt, A, B, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
       !> @param d : integer : the degree of the B-spline
       !> @param n : integer : the number of B-splines
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param amin : real : the minimum value of the knot vector
-      !> @param amax : real : the maximum value of the knot vector
-      !> @param A : real(2n,2n) : the matrix A
-      !> @param B : real(2n,2n) : the matrix B
-      !> @param log : logical : display the result
+      !> @param Z : mp_real : the potential constant
+      !> @param kappa : mp_real : the relativistic quantum number
+      !> @param C : mp_real : the speed of light
+      !> @param amin : mp_real : the minimum value of the knot vector
+      !> @param amax : mp_real : the maximum value of the knot vector
+      !> @param A : mp_real(2*nprime,2*nprime) : the matrix A
+      !> @param B : mp_real(2*nprime,2*nprime) : the matrix B
+      !> @param log_bool : logical : display the result
+      !> @param i2 : integer : the field width
+      !> @param i3 : integer : the number of decimal
       implicit none
       integer, intent(in) :: d, n
-      real, intent(in) :: Z, kappa, C, amin, amax
-      real, intent(out), allocatable, dimension(:, :) :: A, B
-      logical, intent(in), optional :: log
+      type(mp_real), intent(in) :: Z, kappa, C, amin, amax, clt
+      type(mp_real), intent(out), allocatable, dimension(:, :) :: A, B
+      logical, intent(in), optional :: log_bool
+      integer, intent(in), optional :: i2, i3
 
       integer :: nprime
+      type(mp_real) :: zero, one
 
-      real, dimension(n+d) :: knot
-      real, dimension(n, size(knot), d) :: bspline
+      type(mp_real), dimension(n + d) :: knot
+      type(mp_real), dimension(n, size(knot), d) :: bspline
 
-      real, dimension(n, n) :: ovrlp_mat, deriv_mat, potential_mat, k_mat
-      real, allocatable, dimension(:, :) :: aprime_mat
+      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat
+      type(mp_real), allocatable, dimension(:, :) :: aprime_mat
 
       integer :: i_tmp, j_tmp
 
-      ! Number of B-splines without the first and last one
-      nprime = n-2
+      zero = '0.d0'
+      one = '1.d0'
+
+      ! Number of B-splines without the two first and last one
+      nprime = n - 4
 
       ! Generate the knot vector
-      knot = exp_knot(n + d, amax, amin)
+      print *, "Generate the knot vector"
+      knot = exp_knot(n + d, amax, amin, d, clt)
 
       ! Generate the B-splines
+      print *, "Generate the B-splines"
+      !OMP PARALLEL DO PRIVATE(i_tmp) SHARED(d, knot, bspline, n)
       do i_tmp = 1, n
          call init_bspine(d, i_tmp, knot, bspline(i_tmp, :, :), .false.)
       end do
+      !OMP END PARALLEL DO
 
       ! Generate the overlap matrix
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_overlp(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
+      print *, "Generate the overlap matrix"
+      allocate (ovrlp_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_overlp(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
          end do
       end do
+      !$OMP END PARALLEL DO
 
       ! Generate the derivative matrix
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_deriv(bspline(i_tmp, :, :), bspline(j_tmp, :, :), knot, deriv_mat(i_tmp, j_tmp))
+      print *, "Generate the derivative matrix"
+      allocate (deriv_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_deriv(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, deriv_mat(i_tmp, j_tmp))
          end do
       end do
+      !$OMP END PARALLEL DO
 
       ! Generate the potential matrix
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+      print *, "Generate the potential matrix"
+      allocate (potential_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
          end do
       end do
+      !$OMP END PARALLEL DO
 
       ! Generate K matrix
-      do i_tmp = 1, n
-         do j_tmp = 1, n
-            call int_potential(bspline(i_tmp, :, :), bspline(j_tmp, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
+      print *, "Generate the K matrix"
+      allocate (k_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, kappa, knot, k_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
          end do
       end do
+      !$OMP END PARALLEL DO
 
       ! Generate the boundary condition matrix
+      print *, "Generate the boundary condition matrix"
       allocate (aprime_mat(2*nprime, 2*nprime))
       call boundary_cond(nprime, C, kappa, aprime_mat)
 
       ! Generate the matrix A
+      print *, "Generate the matrix A"
       allocate (A(2*nprime, 2*nprime))
-      A = 0.0
-      A(1:nprime, 1:nprime) = potential_mat(2:n-1, 2:n-1)
-      A(1:nprime, nprime+1:2*nprime) = C * (deriv_mat(2:n-1, 2:n-1) + k_mat(2:n-1, 2:n-1))
-      A(nprime+1:2*nprime, 1:nprime) = -C * (deriv_mat(2:n-1, 2:n-1) + k_mat(2:n-1, 2:n-1))
-      A(nprime+1:2*nprime, nprime+1:2*nprime) = potential_mat(2:n-1, 2:n-1) - 2*(C**2) * ovrlp_mat(2:n-1, 2:n-1)
-      A = A + aprime_mat
+      A = zero
+      A(1:nprime, 1:nprime) = potential_mat
+
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            A(i_tmp, nprime + j_tmp) = C*(deriv_mat(i_tmp, j_tmp) - k_mat(i_tmp, j_tmp))
+            A(nprime + i_tmp, j_tmp) = -C*(deriv_mat(i_tmp, j_tmp) + k_mat(i_tmp, j_tmp))
+            A(nprime + i_tmp, nprime + j_tmp) = potential_mat(i_tmp, j_tmp) - 2*(C**2)*ovrlp_mat(i_tmp, j_tmp)
+         end do
+      end do
+
+      do i_tmp = 1, 2*nprime
+         do j_tmp = 1, 2*nprime
+            A(i_tmp, j_tmp) = A(i_tmp, j_tmp) + aprime_mat(i_tmp, j_tmp)
+         end do
+      end do
 
       ! Generate the matrix B
+      print *, "Generate the matrix B"
       allocate (B(2*nprime, 2*nprime))
-      B = 0.0
-      B(1:nprime, 1:nprime) = ovrlp_mat(2:n-1, 2:n-1)
-      B(nprime+1:2*nprime, nprime+1:2*nprime) = ovrlp_mat(2:n-1, 2:n-1)
+      B = zero
+      B(1:nprime, 1:nprime) = ovrlp_mat
+      B(nprime + 1:2*nprime, nprime + 1:2*nprime) = ovrlp_mat
 
-      if (present(log)) then
-         open(1, file="log_2.txt", status="replace")
-10       format(500f15.8)
-         write (1,'(a,i4)') "Number of BSplines: ", n
-         write (1,'(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
-         write (1,'(a)') "Knots: "
-         write (1, 10) knot
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "BSplines Overlaps Matrix : "
-         do i_tmp = 1, n
-            write (1, 10) ovrlp_mat(i_tmp, :)
+      if (present(log_bool) .and. log_bool) then
+         print *, "Writing Logs"
+         open (1, file="log_2.txt", status="replace")
+
+         write (1, '(a,i4)') "Number of BSplines: ", n
+         write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
+         write (1, '(a)') "Knots: "
+         call write_lists(knot, 1, i2, i3)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines Overlaps Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(ovrlp_mat(i_tmp, :), 1, i2, i3) ! This is where the Segmentation fault occurs from valgrind
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "BSplines Derivatives Matrix : "
-         do i_tmp = 1, n
-            write (1, 10) deriv_mat(i_tmp, :)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines Derivatives Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(deriv_mat(i_tmp, :), 1, i2, i3)
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "BSplines Potentials Matrix : "
-         do i_tmp = 1, n
-            write (1, 10) potential_mat(i_tmp, :)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines Potentials Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(potential_mat(i_tmp, :), 1, i2, i3)
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "K/r Matrix : "
-         do i_tmp = 1, n
-            write (1, 10) k_mat(i_tmp, :)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "K/r Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(k_mat(i_tmp, :), 1, i2, i3)
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "Boundary Condition Matrix : "
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Boundary Condition Matrix : "
          do i_tmp = 1, 2*nprime
-            write (1, 10) aprime_mat(i_tmp, :)
+            call write_lists(aprime_mat(i_tmp, :), 1, i2, i3)
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "Matrix A : "
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Matrix A : "
          do i_tmp = 1, 2*nprime
-            write (1, 10) A(i_tmp, :)
+            call write_lists(A(i_tmp, :), 1, i2, i3)
          end do
-         write (1,'(a)') "----------------------------------------------------------------"
-         write (1,'(a)') "Matrix B : "
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Matrix B : "
          do i_tmp = 1, 2*nprime
-            write (1, 10) B(i_tmp, :)
+            call write_lists(B(i_tmp, :), 1, i2, i3)
          end do
-         close(1)
+         close (1)
+         print *, "Logs written"
       end if
    end subroutine matrixAB
 end module bspline_mod
