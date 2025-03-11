@@ -4,27 +4,28 @@ program main
    implicit none
 
    integer :: d, n, nprime, i_tmp, ierr
-   type(mp_real) :: amin, amax, Z, C, kappa
+   type(mp_real) :: amin, amax, Z, C, kappa, clt
    type(mp_real), dimension(:, :), allocatable :: A, B, vect
    type(mp_real), dimension(:), allocatable :: w, fv1, fv2
 
    !----------------------------------------------------------------
    ! Define Important Variables
-   d = 9 ! Order of Mathemathica + 1
-   n = 80 ! Number of B-Splines
-   Z = mpreal(2.d0)
-   C = mpreal(137.036d0) ! check CODATA 1986
-   kappa = mpreal(-1.d0)
-   amin = mpreal(0.002d0)
-   amax = mpreal(10.d0)
+   d = 8 ! Order of Mathemathica + 1
+   n = 40 ! Number of B-Splines
+   Z = '2.d0'
+   C = '137.035989d0' ! check CODATA 1986
+   kappa = '-1.d0'
+   amin = '2.d-3'
+   amax = '4.d1'
+   clt = '1.66d1' ! Clustering factor
 
-   nprime = n - 2
+   nprime = n - 4
    allocate (A(2*nprime, 2*nprime))
    allocate (B(2*nprime, 2*nprime))
 
    !----------------------------------------------------------------
    ! Generate A and B matrices
-   call matrixAB(d, n, Z, kappa, C, amin, amax, A, B, .true.)
+   call matrixAB(d, n, Z, kappa, C, amin, amax, clt, A, B, .true., 40, 20)
 
    !----------------------------------------------------------------
    ! Get Eigenvalues
@@ -41,12 +42,14 @@ program main
    open (2, file='eigenvalues.dat', status='replace')
 
    do i_tmp = 1, 2*nprime
-      call mpwrite(2, 30, 10, w(i_tmp))
+      call mpwrite(2, 35, 15, w(2*nprime - i_tmp + 1))
    end do
-   
+
    close (2)
 
-   deallocate (A, B, fv1, fv2, w)
+   deallocate (A, B, fv1, fv2, w, vect)
+
+   print *, 'Done'
 
 end program main
 
