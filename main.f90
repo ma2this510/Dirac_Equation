@@ -47,7 +47,9 @@ program main
    
    close (2)
 
-   deallocate (A, B, fv1, fv2, w)
+   deallocate (A, B, fv1, fv2, w, vect)
+
+   print *, 'Done'
 
 end program main
 
