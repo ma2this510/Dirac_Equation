@@ -3,21 +3,23 @@ program main
    use bspline_mod
    implicit none
 
-   integer :: d, n, nprime, i_tmp, ierr
+   integer :: d, n, nprime, i_tmp, ierr, method
    type(mp_real) :: amin, amax, Z, C, kappa, clt
    type(mp_real), dimension(:, :), allocatable :: A, B, vect
    type(mp_real), dimension(:), allocatable :: w, fv1, fv2
 
-   !----------------------------------------------------------------
+   !-----------------------------------------------------------------!
    ! Define Important Variables
    d = 8 ! Order of Mathemathica + 1
    n = 40 ! Number of B-Splines
    Z = '2.d0'
    C = '137.035989d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '2.d-3'
-   amax = '4.d1'
-   clt = '1.66d1' ! Clustering factor
+   amin = '8.d-6'
+   amax = '2.d1'
+   method = 0
+   clt = '1.66d1' ! Clustering factor useful only if method = 1
+   !-----------------------------------------------------------------!
 
    nprime = n - 4
    allocate (A(2*nprime, 2*nprime))
@@ -25,7 +27,7 @@ program main
 
    !----------------------------------------------------------------
    ! Generate A and B matrices
-   call matrixAB(d, n, Z, kappa, C, amin, amax, clt, A, B, .true., 40, 20)
+   call matrixAB(d, n, Z, kappa, C, amin, amax, method, clt, A, B, .true., 40, 20)
 
    !----------------------------------------------------------------
    ! Get Eigenvalues

@@ -263,15 +263,16 @@ contains
 
    end subroutine int_overlp
 
-   function exp_knot(n, a_max, a_min, d, clt) result(result)
+   function exp_knot(n, a_max, a_min, d, method, clt) result(result)
       !> @brief Generate a knot vector with exponential distribution
       !> @param n : integer : the number of knots
       !> @param a_max : mp_real : the maximum value of the knot vector
       !> @param a_min : mp_real : the minimum value of the knot vector
       !> @param d : integer : the degree of the B-spline
+      !> @param method : integer : which methd will be used, 0 for lin, 1 for exp
       !> @param clt : mp_real : the clustering factor
       !> @return result : mp_real(n) : the knot vector
-      integer, intent(in) :: n, d
+      integer, intent(in) :: n, d, method
       type(mp_real), intent(in) :: a_max, a_min, clt
       type(mp_real), dimension(n) :: result
 
@@ -283,8 +284,11 @@ contains
          result(i_tmp) = zero
       end do
       do i_tmp = d + 1, n - d + 1
-         ! result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1)*one)/(n - 2*d)*one))
-         result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp-d)/(n-2*d+1))-1)/(exp(clt)-1)
+         if (method == 0) then
+            result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1))*one/(n - 2*d)*one))
+            else
+            result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp - d)/(n - 2*d + 1)) - 1)/(exp(clt) - 1)
+         end if
       end do
       do i_tmp = n - d + 2, n
          result(i_tmp) = a_max
@@ -446,7 +450,7 @@ contains
 
    end subroutine write_lists
 
-   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, clt, A, B, log_bool, i2, i3)
+   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, method, clt, A, B, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
       !> @param d : integer : the degree of the B-spline
       !> @param n : integer : the number of B-splines
@@ -461,7 +465,7 @@ contains
       !> @param i2 : integer : the field width
       !> @param i3 : integer : the number of decimal
       implicit none
-      integer, intent(in) :: d, n
+      integer, intent(in) :: d, n, method
       type(mp_real), intent(in) :: Z, kappa, C, amin, amax, clt
       type(mp_real), intent(out), allocatable, dimension(:, :) :: A, B
       logical, intent(in), optional :: log_bool
@@ -486,7 +490,7 @@ contains
 
       ! Generate the knot vector
       print *, "Generate the knot vector"
-      knot = exp_knot(n + d, amax, amin, d, clt)
+      knot = exp_knot(n + d, amax, amin, d, method, clt)
 
       ! Generate the B-splines
       print *, "Generate the B-splines"
