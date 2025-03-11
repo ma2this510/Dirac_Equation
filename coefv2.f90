@@ -283,8 +283,8 @@ contains
          result(i_tmp) = zero
       end do
       do i_tmp = d + 1, n - d + 1
-         ! result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1)*one)/(n - 2*d)*one))
-         result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp-d)/(n-2*d+1))-1)/(exp(clt)-1)
+         result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1)*one)/(n - 2*d)*one))
+         ! result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp-d)/(n-2*d+1))-1)/(exp(clt)-1)
       end do
       do i_tmp = n - d + 2, n
          result(i_tmp) = a_max

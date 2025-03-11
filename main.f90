@@ -10,13 +10,13 @@ program main
 
    !----------------------------------------------------------------
    ! Define Important Variables
-   d = 8 ! Order of Mathemathica + 1
-   n = 40 ! Number of B-Splines
+   d = 10 ! Order of Mathemathica + 1
+   n = 300 ! Number of B-Splines
    Z = '2.d0'
    C = '137.035989d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '2.d-3'
-   amax = '4.d1'
+   amin = '1.d-5'
+   amax = '5.d1'
    clt = '1.66d1' ! Clustering factor
 
    nprime = n - 4
