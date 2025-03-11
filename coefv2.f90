@@ -269,7 +269,7 @@ contains
       !> @param a_max : mp_real : the maximum value of the knot vector
       !> @param a_min : mp_real : the minimum value of the knot vector
       !> @param d : integer : the degree of the B-spline
-      !> @param method : integer : which methd will be used, 0 for lin, 1 for exp
+      !> @param method : integer : which methd will be used, 0 for lin, 1 for exp, 2 for fisher
       !> @param clt : mp_real : the clustering factor
       !> @return result : mp_real(n) : the knot vector
       integer, intent(in) :: n, d, method
@@ -286,8 +286,10 @@ contains
       do i_tmp = d + 1, n - d + 1
          if (method == 0) then
             result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1))*one/(n - 2*d)*one))
-            else
+         else if (method == 1) then
             result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp - d)/(n - 2*d + 1)) - 1)/(exp(clt) - 1)
+         else if (method == 2) then
+            result = fisher_knot(n, a_max, a_min, clt)
          end if
       end do
       do i_tmp = n - d + 2, n
@@ -295,6 +297,24 @@ contains
       end do
 
    end function exp_knot
+
+   function fisher_knot(n, a_max, a_min, h) result(result)
+      integer, intent(in) :: n
+      type(mp_real), intent(in) :: a_max, a_min, h
+      type(mp_real), dimension(n) :: result
+
+      integer :: i_tmp
+
+      result(1) = h
+      do i_tmp = 2, n
+         if (result(i_tmp - 1)/5 < h) then
+            result(i_tmp) = 1.2d0*result(i_tmp - 1)
+         else
+            result(i_tmp) = result(i_tmp - 1) + h
+         end if
+      end do
+
+   end function fisher_knot
 
    function deriv(b1) result(result)
       !> @brief Calculate the derivative of a B-spline

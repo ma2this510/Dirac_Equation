@@ -17,8 +17,8 @@ program main
    kappa = '-1.d0'
    amin = '8.d-6'
    amax = '2.d1'
-   method = 0
-   clt = '1.66d1' ! Clustering factor useful only if method = 1
+   method = 1
+   clt = '1.55d1' ! Clustering factor useful only if method = 1
    !-----------------------------------------------------------------!
 
    nprime = n - 4
