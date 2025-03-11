@@ -288,10 +288,11 @@ contains
             result(i_tmp) = a_min*(a_max/a_min)**(((i_tmp - (d + 1))*one/(n - 2*d)*one))
          else if (method == 1) then
             result(i_tmp) = a_min + (a_max - a_min)*(exp(clt*(i_tmp - d)/(n - 2*d + 1)) - 1)/(exp(clt) - 1)
-         else if (method == 2) then
-            result = fisher_knot(n, a_max, a_min, clt)
          end if
       end do
+      if (method == 2) then
+         result(d + 1 : n - d + 1) = fisher_knot(n-2*d+1, a_max, a_min, clt)
+      end if
       do i_tmp = n - d + 2, n
          result(i_tmp) = a_max
       end do
@@ -306,13 +307,14 @@ contains
       integer :: i_tmp
 
       result(1) = h
-      do i_tmp = 2, n
+      do i_tmp = 2, n - 1
          if (result(i_tmp - 1)/5 < h) then
             result(i_tmp) = 1.2d0*result(i_tmp - 1)
          else
             result(i_tmp) = result(i_tmp - 1) + h
          end if
       end do
+      result(n) = a_max
 
    end function fisher_knot
 
@@ -433,19 +435,19 @@ contains
       one = '1.d0'
 
       aprime = zero
-      if (kappa > zero) then
-         aprime(1, 1) = 2*C**2
-         aprime(1, n + 1) = -C/2
-         aprime(n + 1, 1) = -C/2
-         aprime(n, n) = C/2
-         aprime(2*n, 2*n) = -C/2
-      else if (kappa < zero) then
-         aprime(1, 1) = C
-         aprime(1, n + 1) = -C/2
-         aprime(n + 1, 1) = -C/2
-         aprime(n, n) = C/2
-         aprime(2*n, 2*n) = -C/2
-      end if
+      ! if (kappa > zero) then
+      !    aprime(1, 1) = 2*C**2
+      !    aprime(1, n + 1) = -C/2
+      !    aprime(n + 1, 1) = -C/2
+      !    aprime(n, n) = C/2
+      !    aprime(2*n, 2*n) = -C/2
+      ! else if (kappa < zero) then
+      !    aprime(1, 1) = C
+      !    aprime(1, n + 1) = -C/2
+      !    aprime(n + 1, 1) = -C/2
+      !    aprime(n, n) = C/2
+      !    aprime(2*n, 2*n) = -C/2
+      ! end if
    end subroutine boundary_cond
 
    subroutine write_lists(r1s, i1, i2, i3)
@@ -470,10 +472,11 @@ contains
 
    end subroutine write_lists
 
-   subroutine matrixAB(d, n, Z, kappa, C, amin, amax, method, clt, A, B, log_bool, i2, i3)
+   subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, method, clt, A, B, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
       !> @param d : integer : the degree of the B-spline
       !> @param n : integer : the number of B-splines
+      !> @param n : integer : the number of B-splines to be remove at the start and the end
       !> @param Z : mp_real : the potential constant
       !> @param kappa : mp_real : the relativistic quantum number
       !> @param C : mp_real : the speed of light
@@ -485,7 +488,7 @@ contains
       !> @param i2 : integer : the field width
       !> @param i3 : integer : the number of decimal
       implicit none
-      integer, intent(in) :: d, n, method
+      integer, intent(in) :: d, n, method, n_remove
       type(mp_real), intent(in) :: Z, kappa, C, amin, amax, clt
       type(mp_real), intent(out), allocatable, dimension(:, :) :: A, B
       logical, intent(in), optional :: log_bool
@@ -506,7 +509,7 @@ contains
       one = '1.d0'
 
       ! Number of B-splines without the two first and last one
-      nprime = n - 4
+      nprime = n - 2*n_remove
 
       ! Generate the knot vector
       print *, "Generate the knot vector"
@@ -526,7 +529,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call int_overlp(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
+            call int_overlp(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -537,7 +540,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call int_deriv(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), knot, deriv_mat(i_tmp, j_tmp))
+            call int_deriv(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, deriv_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -548,7 +551,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+            call int_potential(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -559,7 +562,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, kappa, knot, k_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call int_potential(bspline(i_tmp + 2, :, :), bspline(j_tmp + 2, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
+            call int_potential(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), -kappa, knot, k_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
