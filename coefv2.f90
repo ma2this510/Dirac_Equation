@@ -15,6 +15,7 @@ module bspline_mod
    public :: int_potential
    public :: boundary_cond
    public :: matrixAB
+   public :: get_eigen
 
 contains
 
@@ -291,7 +292,7 @@ contains
          end if
       end do
       if (method == 2) then
-         result(d + 1 : n - d + 1) = fisher_knot(n-2*d+1, a_max, a_min, clt)
+         result(d + 1:n - d + 1) = fisher_knot(n - 2*d + 1, a_max, a_min, clt)
       end if
       do i_tmp = n - d + 2, n
          result(i_tmp) = a_max
@@ -551,7 +552,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call int_potential(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+          call int_potential(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -646,4 +647,56 @@ contains
          print *, "Logs written"
       end if
    end subroutine matrixAB
+
+   subroutine get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, log_bool, i2, i3)
+      integer, intent(in) :: d, n, n_remove, i2, i3
+      type(mp_real), intent(in) :: Z, kappa, C, amin, amax
+      logical, intent(in), optional :: log_bool
+
+      integer :: nprime, i_tmp, ierr, method
+      type(mp_real) :: zero, one, clt
+      type(mp_real), dimension(:, :), allocatable :: A, B, vect
+      type(mp_real), dimension(:), allocatable :: w, fv1, fv2
+      character(len=100) :: log_file
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      nprime = n - 2*n_remove
+      method = 0
+      clt = '0.5d0'
+
+      allocate (A(2*nprime, 2*nprime))
+      allocate (B(2*nprime, 2*nprime))
+
+      call matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, method, clt, A, B, log_bool, i2, i3)
+
+      print *, "Calculating the eigenvalues"
+
+      allocate (w(2*nprime))
+      allocate (vect(2*nprime, 2*nprime))
+      allocate (fv1(2*nprime))
+      allocate (fv2(2*nprime))
+
+      call rsg(2*nprime, 2*nprime, A, B, w, 0, vect, fv1, fv2, ierr)
+
+      print *, "Error code: ", ierr
+
+      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
+
+      open (2, file=log_file, status="replace")
+
+      do i_tmp = 1, 2*nprime
+         if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
+            call mpwrite(2, i2, i3, w(i_tmp))
+         end if
+      end do
+
+      close (2)
+
+      deallocate (A, B, w, vect, fv1, fv2)
+
+      print *, "Eigenvalues written to ", log_file
+
+   end subroutine get_eigen
 end module bspline_mod
