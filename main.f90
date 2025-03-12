@@ -4,26 +4,29 @@ program main
    implicit none
 
    integer :: d, n_remove, n
-   type(mp_real) :: amin, amax, Z, C, kappa
+   type(mp_real) :: amin, amax, Z, C, kappa, zero, one
 
-   type(mp_real) :: zero, one
+   type(mp_real), dimension(:, :), allocatable :: Gauche, Droite
 
    zero = '0.d0'
    one = '1.d0'
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 7 ! Order of Mathemathica + 1
-   n = 60 ! Number of Bspline
+   d = 4 ! Order of Mathemathica + 1
+   n = 8 ! Number of Bspline
    n_remove = 2 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
-   kappa = '1.d0'
-   amin = '2.d-3'
-   amax = '4.d1'
+   kappa = '-1.d0'
+   amin = '1.d-1'
+   amax = '1.d1'
    !-----------------------------------------------------------------!
 
-   call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
+   allocate(Gauche(n - 2*n_remove, n - 2*n_remove))
+   allocate(Droite(n - 2*n_remove, n - 2*n_remove))
+
+   call matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, Gauche, Droite, .true., 45, 25)
 
 end program main
 

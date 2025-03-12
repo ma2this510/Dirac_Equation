@@ -8,14 +8,15 @@ module bspline_mod
 
    private
 
-   public :: int_overlp
+   public :: int_S
    public :: exp_knot
-   public :: int_deriv
-   public :: int_potential
+   public :: int_V
+   public :: int_T
+   public :: matrixAB
 
 contains
 
-   subroutine int_overlp(b1, b2, knot, result)
+   subroutine int_S(b1, b2, knot, result)
       !> @brief Calculate the integral of the product of two B-splines
       !> @param b1 : real(:,:) : the coef of the first B-spline
       !> @param b2 : real(:,:) : the coef of the second B-spline
@@ -68,7 +69,7 @@ contains
          result = result + int_per_knot(i_tmp)
       end do
 
-   end subroutine int_overlp
+   end subroutine int_S
 
    function exp_knot(n, a_max, a_min, d, method, clt) result(result)
       !> @brief Generate a knot vector with exponential distribution
@@ -104,44 +105,7 @@ contains
 
    end function exp_knot
 
-   function deriv(b1) result(result)
-      !> @brief Calculate the derivative of a B-spline
-      !> @param b1 : real(size(knot),d) : the coef of the B-spline
-      !> @return result : real(size(knot),d) : the coef of the derivative of the B-spline
-      type(mp_real), intent(in) :: b1(:, :)
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: result
-
-      integer :: i_tmp, j_tmp
-
-      zero = '0.d0'
-      one = '1.d0'
-
-      result = zero
-      result(:, 2:size(b1, 2)) = b1(:, 1:size(b1, 2) - 1) ! need to check
-
-      do i_tmp = 1, size(b1, 1)
-         do j_tmp = 1, size(b1, 2)
-            result(i_tmp, j_tmp) = result(i_tmp, j_tmp)*(size(b1, 2) - j_tmp + 1)
-         end do
-      end do
-   end function deriv
-
-   subroutine int_deriv(b1, b2, knot, result)
-      !> @brief Calculate the integral of the product of a B-spline and the derivative of another B-spline
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param result : real : the result of the integral
-      implicit none
-      type(mp_real), intent(in), dimension(:, :) :: b1, b2
-      type(mp_real), intent(in) :: knot(:)
-      type(mp_real), intent(out) :: result
-
-      call int_overlp(b1, deriv(b2), knot, result)
-
-   end subroutine int_deriv
-
-   subroutine int_potential(b1, b2, Z, knot, result)
+   subroutine int_V(b1, b2, Z, knot, result)
       !> @brief Calculate the integral of the product of a B-spline and the potential of another B-spline
       !> @param b1 : real(:,:) : the coef of the first B-spline
       !> @param b2 : real(:,:) : the coef of the second B-spline
@@ -204,8 +168,203 @@ contains
 
       result = -Z*result
 
-   end subroutine int_potential
+   end subroutine int_V
 
-   
+   function deriv_double(b) result(result)
+      !> @brief Calculate the second derivative of a B-spline
+      !> @Warning : doesn't work when divided by r
+      !> @param b : real(:) : the coef of the B-spline
+      !> @return result : real(:) : the coef of the second derivative of the B-spline
+      implicit none
+      type(mp_real), intent(in) :: b(:, :)
+      type(mp_real) :: result(size(b, 1), size(b, 2))
 
+      integer :: i_tmp, j_tmp
+
+      result = zero
+      result(:, 3:size(b, 2)) = b(:, 1:size(b, 2) - 2)
+
+      do i_tmp = 1, size(b, 1)
+         do j_tmp = 1, size(b, 2)
+            result(i_tmp, j_tmp) = result(i_tmp, j_tmp)*(size(b, 2) - j_tmp + 2)*(size(b, 2) - j_tmp + 1)
+            ! print *, size(b, 2) - j_tmp + 2, size(b, 2) - j_tmp + 1
+         end do
+      end do
+   end function deriv_double
+
+   function deriv_single(b, order) result(result)
+      !> @brief Calculate the first derivative of a B-spline
+      !> @Warning : work when divided by r or r^2
+      !> @param b : real(:, :) : the coef of the B-spline
+      !> @param order : integer : the max order of the coef
+      !> @return result : real(:) : the coef of the first derivative of the B-spline
+      implicit none
+      type(mp_real), intent(in) :: b(:, :)
+      integer, intent(in) :: order
+      type(mp_real) :: result(size(b, 1), size(b, 2))
+
+      integer :: i_tmp, j_tmp
+
+      result = zero
+      do i_tmp = 1, size(b, 1)
+         do j_tmp = 1, size(b, 2)
+            result(i_tmp, j_tmp) = b(i_tmp, j_tmp)*dble(order - j_tmp + 1)
+         end do
+      end do
+      ! Implicite : order of the max coef is decreased by 1
+   end function deriv_single
+
+   subroutine int_T(b1, b2, knot, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      call int_S(b1, deriv_double(b2), knot, result)
+
+      result = -result/2
+
+   end subroutine int_T
+
+   subroutine int_W(b1, b2, Z, knot, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      integer :: order1, order2, order3, order4
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      term1 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
+      order1 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+
+      term2 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
+      order2 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+
+      term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2)-1), size(b2, 2)-2), size(b2, 2)-3) ! d^3r(b2)/r^3
+      order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+
+      term4 = deriv_single(deriv_single(b2, size(b2, 2)-2), size(b2, 2)-3) ! d^2r((1+k)*b2/r)
+      order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
+
+      
+   end subroutine int_W
+
+   subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, A, B, log_bool, i2, i3)
+      !> @brief Generate the matrix A and B
+      !> @param d : integer : the degree of the B-spline
+      !> @param n : integer : the number of B-splines
+      !> @param n : integer : the number of B-splines to be remove at the start and the end
+      !> @param Z : mp_real : the potential constant
+      !> @param kappa : mp_real : the relativistic quantum number
+      !> @param C : mp_real : the speed of light
+      !> @param amin : mp_real : the minimum value of the knot vector
+      !> @param amax : mp_real : the maximum value of the knot vector
+      !> @param A : mp_real(2*nprime,2*nprime) : the matrix A
+      !> @param B : mp_real(2*nprime,2*nprime) : the matrix B
+      !> @param log_bool : logical : display the result
+      !> @param i2 : integer : the field width
+      !> @param i3 : integer : the number of decimal
+      implicit none
+      integer, intent(in) :: d, n, n_remove
+      type(mp_real), intent(in) :: Z, kappa, C, amin, amax
+      type(mp_real), intent(out), allocatable, dimension(:, :) :: A, B
+      logical, intent(in), optional :: log_bool
+      integer, intent(in), optional :: i2, i3
+
+      integer :: nprime
+
+      type(mp_real), dimension(n + d) :: knot
+      type(mp_real), dimension(n, size(knot), d) :: bspline
+
+      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat
+      type(mp_real), allocatable, dimension(:, :) :: aprime_mat
+
+      integer :: i_tmp, j_tmp
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      ! Number of B-splines without the two first and last one
+      nprime = n - 2*n_remove
+
+      ! Generate the knot vector
+      print *, "Generate the knot vector"
+      knot = exp_knot(n + d, amax, amin, d, 0, zero)
+
+      ! Generate the B-splines
+      print *, "Generate the B-splines"
+      !OMP PARALLEL DO PRIVATE(i_tmp) SHARED(d, knot, bspline, n)
+      do i_tmp = 1, n
+         call init_bspine(d, i_tmp, knot, bspline(i_tmp, :, :), .false.)
+      end do
+      !OMP END PARALLEL DO
+
+      ! Generate the overlap matrix
+      print *, "Generate S matrix"
+      allocate (ovrlp_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, ovrlp_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_S(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, ovrlp_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+      ! Generate the derivative matrix
+      print *, "Generate T matrix"
+      allocate (deriv_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, deriv_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_T(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, deriv_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+      ! Generate the potential matrix
+      print *, "Generate V matrix"
+      allocate (potential_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, knot, potential_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_V(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, knot, potential_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+      if (present(log_bool) .and. log_bool) then
+         print *, "Writing Logs"
+         open (1, file="log_2.txt", status="replace")
+
+         write (1, '(a,i4)') "Number of BSplines: ", n
+         write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
+         write (1, '(a)') "Knots: "
+         call write_lists(knot, 1, i2, i3)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines S Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(ovrlp_mat(i_tmp, :), 1, i2, i3) ! This is where the Segmentation fault occurs from valgrind
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines T Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(deriv_mat(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines V Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(potential_mat(i_tmp, :), 1, i2, i3)
+         end do
+         close (1)
+         print *, "Logs written"
+      end if
+   end subroutine matrixAB
 end module bspline_mod

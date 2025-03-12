@@ -77,19 +77,25 @@ tred2.o : tred2.f90
 eigen : pythag.o rebak.o reduc.o rsg.o tql2.o tqlrat.o tred1.o tred2.o
 
 # My code part
+tools_mp.o : tools_mp.f90
+	$(FC) $(FFLAGS) -c tools_mp.f90
+
+bspline_gen.o : bspline_gen.f90
+	$(FC) $(FFLAGS) -c bspline_gen.f90
+
 coefv2.o : coefv2.f90 
 	$(FC) $(FFLAGS) -c coefv2.f90
 
 main.o : main.f90
 	$(FC) $(FFLAGS) -c main.f90
 
-main.out : mpfun eigen coefv2.o main.o $(MARG)
-	$(FC) $(FFLAGS) -fmax-stack-var-size=0 -o main.out mpfuna.o mpfunb.o mpfunc.o mpfund.o mpfune.o mpfunf.o mpfung1.o mpfunh1.o mpmodule.o mpmask13.o second.o pythag.o rebak.o reduc.o rsg.o tql2.o tqlrat.o tred1.o tred2.o coefv2.o main.o
+main.out : mpfun eigen tools_mp.o bspline_gen.o coefv2.o main.o $(MARG)
+	$(FC) $(FFLAGS) -fmax-stack-var-size=0 -o main.out mpfuna.o mpfunb.o mpfunc.o mpfund.o mpfune.o mpfunf.o mpfung1.o mpfunh1.o mpmodule.o mpmask13.o second.o pythag.o rebak.o reduc.o rsg.o tql2.o tqlrat.o tred1.o tred2.o tools_mp.o bspline_gen.o coefv2.o main.o
 
-debug.out : mpfun eigen coefv2.f90 main.f90 $(MARG)
+debug.out : mpfun eigen tools_mp.o bspline_gen.o coefv2.f90 main.f90 $(MARG)
 	$(FC) $(DEBUG_FLAGS) -c coefv2.f90
 	$(FC) $(DEBUG_FLAGS) -c main.f90
-	$(FC) $(DEBUG_FLAGS) -o debug.out mpfuna.o mpfunb.o mpfunc.o mpfund.o mpfune.o mpfunf.o mpfung1.o mpfunh1.o mpmodule.o mpmask13.o second.o pythag.o rebak.o reduc.o rsg.o tql2.o tqlrat.o tred1.o tred2.o coefv2.o main.o
+	$(FC) $(DEBUG_FLAGS) -o debug.out mpfuna.o mpfunb.o mpfunc.o mpfund.o mpfune.o mpfunf.o mpfung1.o mpfunh1.o mpmodule.o mpmask13.o second.o pythag.o rebak.o reduc.o rsg.o tql2.o tqlrat.o tred1.o tred2.o tools_mp.o bspline_gen.o coefv2.o main.o
 
 run : main.out
 	./main.out
