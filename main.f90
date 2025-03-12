@@ -3,7 +3,7 @@ program main
    use bspline_mod
    implicit none
 
-   integer :: d, nmin, nmax, n_remove, n, step, i_tmp
+   integer :: d, n_remove, n
    type(mp_real) :: amin, amax, Z, C, kappa
 
    type(mp_real) :: zero, one
@@ -14,25 +14,16 @@ program main
    !-----------------------------------------------------------------!
    ! Define Important Variables
    d = 7 ! Order of Mathemathica + 1
-   nmin = 20 ! Number minimal of B-Spline
-   nmax = 100 ! Number minimal of B-Spline
-   step = 3 ! Number of Intermedier n
+   n = 60 ! Number of Bspline
    n_remove = 2 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
-   kappa = '-1.d0'
+   kappa = '1.d0'
    amin = '2.d-3'
    amax = '4.d1'
    !-----------------------------------------------------------------!
 
-   do i_tmp = 1, step
-      n = nint(nmin*(nmax/nmin)**(real(i_tmp - 1)/real(step - 1)))
-      print *, 'Starting Process for n =', n, '& d =', d
-      
-      call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .false., 45, 25)
-
-   end do
-   print *, 'All Process Done and writen to ./result'
+   call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
 
 end program main
 

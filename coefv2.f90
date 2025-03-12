@@ -436,19 +436,19 @@ contains
       one = '1.d0'
 
       aprime = zero
-      ! if (kappa > zero) then
-      !    aprime(1, 1) = 2*C**2
-      !    aprime(1, n + 1) = -C/2
-      !    aprime(n + 1, 1) = -C/2
-      !    aprime(n, n) = C/2
-      !    aprime(2*n, 2*n) = -C/2
-      ! else if (kappa < zero) then
-      !    aprime(1, 1) = C
-      !    aprime(1, n + 1) = -C/2
-      !    aprime(n + 1, 1) = -C/2
-      !    aprime(n, n) = C/2
-      !    aprime(2*n, 2*n) = -C/2
-      ! end if
+      if (kappa > zero) then
+         aprime(1, 1) = 2*C**2
+         aprime(1, n + 1) = -C/2
+         aprime(n + 1, 1) = -C/2
+         aprime(n, n) = C/2
+         aprime(2*n, 2*n) = -C/2
+      else if (kappa < zero) then
+         aprime(1, 1) = C
+         aprime(1, n + 1) = -C/2
+         aprime(n + 1, 1) = -C/2
+         aprime(n, n) = C/2
+         aprime(2*n, 2*n) = -C/2
+      end if
    end subroutine boundary_cond
 
    subroutine write_lists(r1s, i1, i2, i3)
@@ -657,7 +657,7 @@ contains
       type(mp_real) :: zero, one, clt
       type(mp_real), dimension(:, :), allocatable :: A, B, vect
       type(mp_real), dimension(:), allocatable :: w, fv1, fv2
-      character(len=100) :: log_file
+      character(len=150) :: log_file
 
       zero = '0.d0'
       one = '1.d0'
@@ -685,6 +685,10 @@ contains
       write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
 
       open (2, file=log_file, status="replace")
+
+      write (2, '(a)') "Kappa: "
+      call mpwrite(2, 25, 5, kappa)
+      write (2, '(a)') "Eigenvalues: "
 
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
