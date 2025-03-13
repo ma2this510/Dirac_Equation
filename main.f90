@@ -13,11 +13,11 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
+   d = 7 ! Order of Mathemathica + 1
    nmin = 20 ! Number minimal of B-Spline
    nmax = 1000 ! Number minimal of B-Spline
-   step = 10 ! Number of Intermedier n
-   n_remove = 2 ! Number of Bspline to remove at the start and the end
+   step = 20 ! Number of Intermedier n
+   n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
