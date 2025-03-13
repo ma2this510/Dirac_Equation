@@ -16,6 +16,76 @@ module bspline_mod
 
 contains
 
+   subroutine integral(b1, order1, b2, order2, knot, result)
+      !> @brief Calculate the integral of the product of two Piecewise polynomial of any order
+      !> @param b1 : real(:,:) : the coef of the first Piecewise polynomial
+      !> @param order1 : integer : the max order of the first Piecewise polynomial
+      !> @param b2 : real(:,:) : the coef of the second Piecewise polynomial
+      !> @param order2 : integer : the max order of the second Piecewise polynomial
+      !> @param knot : real(:) : the knot vector
+      !> @param result : real : the result of the integral
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      integer, intent(in) :: order1, order2
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+
+      type(mp_real), dimension(size(b1, 1)) :: int_per_knot
+
+      integer :: order_prod, i_tmp, j_tmp
+      type(mp_real), dimension(:, :), allocatable :: produit, int_init, int_final
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      allocate (produit(size(b1, 1), 2*size(b1, 2) - 1))
+      allocate (int_final(size(b1, 1), 2*size(b1, 2)))
+      allocate (int_init(size(b1, 1), 2*size(b1, 2)))
+
+      produit = zero
+      order_prod = order1 + order2
+      int_final = zero
+      int_init = zero
+      int_per_knot = zero
+
+      do i_tmp = 1, size(b1, 1) ! Loop over the number of Piecewise polynomial
+         produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), b2(i_tmp, :))
+      end do
+
+      do i_tmp = 1, size(produit, 1) - 1 ! Loop over the number of Piecewise polynomial
+         do j_tmp = 1, size(produit, 2) ! Loop over the different orders
+            if (order_prod - j_tmp + 2 /= 0) then
+               if (knot(i_tmp + 1) /= zero) then
+                  int_final(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*(knot(i_tmp + 1)**(order_prod - j_tmp + 2))/(order_prod - j_tmp + 2) ! +2 because of the integral that add one order
+               end if
+               if (knot(i_tmp) /= zero) then
+                  int_init(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*(knot(i_tmp)**(order_prod - j_tmp + 2))/(order_prod - j_tmp + 2)
+               end if
+            else
+               if (knot(i_tmp + 1) /= zero) then
+                  int_final(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*log(knot(i_tmp + 1))
+               end if
+               if (knot(i_tmp) /= zero) then
+                  int_init(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*log(knot(i_tmp))
+               end if
+            end if
+         end do
+      end do
+
+      do i_tmp = 1, size(b1, 1) - 1 ! Loop over the number of Piecewise polynomial
+         int_per_knot(i_tmp) = zero
+         do j_tmp = 1, size(produit, 2) ! Loop over the different orders
+            int_per_knot(i_tmp) = int_per_knot(i_tmp) + int_final(i_tmp, j_tmp) - int_init(i_tmp, j_tmp)
+         end do
+      end do
+
+      result = zero
+      do i_tmp = 1, size(b1, 1) - 1
+         result = result + int_per_knot(i_tmp)
+      end do
+
+   end subroutine integral
+
    subroutine int_S(b1, b2, knot, result)
       !> @brief Calculate the integral of the product of two B-splines
       !> @param b1 : real(:,:) : the coef of the first B-spline
@@ -229,33 +299,53 @@ contains
 
    end subroutine int_T
 
-   subroutine int_W(b1, b2, Z, knot, result)
+   subroutine int_Wdiag(b1, b2, Z, kappa, knot, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
-      type(mp_real), intent(in) :: Z
+      type(mp_real), intent(in) :: Z, kappa
       type(mp_real), intent(in) :: knot(:)
       type(mp_real), intent(out) :: result
 
       type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
       integer :: order1, order2, order3, order4
 
       zero = '0.d0'
       one = '1.d0'
 
-      term1 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
-      order1 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+      term1 = deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 3) ! dr (dr(b2)/r)
+      order1 = size(b2, 2) - 4 ! order init - 3 because divided by r and two derivative
 
-      term2 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
-      order2 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+      term2 = deriv_single(multiply_elem((1 + kappa), b2), size(b2, 2) - 3) ! dr ((1+kappa)*b2/r²)
+      order2 = size(b2, 2) - 4 ! order init - 3 because divided by r² and one derivative
 
-      term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2)-1), size(b2, 2)-2), size(b2, 2)-3) ! d^3r(b2)/r^3
-      order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+      term3 = multiply_elem((1 + kappa), deriv_single(b2, size(b2, 2) - 1)) ! (1+kappa)/r² * dr(b2)
+      order3 = size(b2, 2) - 4 ! order init - 3 because divided by r² and one derivative
 
-      term4 = deriv_single(deriv_single(b2, size(b2, 2)-2), size(b2, 2)-3) ! d^2r((1+k)*b2/r)
-      order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
+      term4 = multiply_elem((1 + kappa)**2, b2) ! (1+kappa)² * b2/r³
+      order4 = size(b2, 2) - 4 ! order init - 3 because divided by r³
 
-      
-   end subroutine int_W
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
+
+      result = Z*(result1 + result2 + result3 + result4)
+
+   end subroutine int_Wdiag
+
+   ! For WLS
+   ! term1 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
+   ! order1 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+
+   ! term2 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
+   ! order2 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+
+   ! term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2)-1), size(b2, 2)-2), size(b2, 2)-3) ! d^3r(b2)/r^3
+   ! order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+
+   ! term4 = deriv_single(deriv_single(b2, size(b2, 2)-2), size(b2, 2)-3) ! d^2r((1+k)*b2/r)
+   ! order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
 
    subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, A, B, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
@@ -284,7 +374,7 @@ contains
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
 
-      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat
+      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat, wdiag_mat
       type(mp_real), allocatable, dimension(:, :) :: aprime_mat
 
       integer :: i_tmp, j_tmp
@@ -340,6 +430,17 @@ contains
       end do
       !$OMP END PARALLEL DO
 
+      ! Generate the matrix Wdiag
+      print *, "Generate Wdiag matrix"
+      allocate (wdiag_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, kappa, knot, Wdiag_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+           call int_Wdiag(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, kappa, knot, wdiag_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
       if (present(log_bool) .and. log_bool) then
          print *, "Writing Logs"
          open (1, file="log_2.txt", status="replace")
@@ -351,7 +452,7 @@ contains
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines S Matrix : "
          do i_tmp = 1, nprime
-            call write_lists(ovrlp_mat(i_tmp, :), 1, i2, i3) ! This is where the Segmentation fault occurs from valgrind
+            call write_lists(ovrlp_mat(i_tmp, :), 1, i2, i3)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "BSplines T Matrix : "
@@ -362,6 +463,11 @@ contains
          write (1, '(a)') "BSplines V Matrix : "
          do i_tmp = 1, nprime
             call write_lists(potential_mat(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines Wdiag Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(wdiag_mat(i_tmp, :), 1, i2, i3)
          end do
          close (1)
          print *, "Logs written"
