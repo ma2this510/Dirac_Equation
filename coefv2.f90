@@ -13,6 +13,7 @@ module bspline_mod
    public :: int_V
    public :: int_T
    public :: matrixAB
+   public :: get_eigen
 
 contains
 
@@ -56,7 +57,7 @@ contains
          do j_tmp = 1, size(produit, 2) ! Loop over the different orders
             if (order_prod - j_tmp + 2 /= 0) then
                if (knot(i_tmp + 1) /= zero) then
-                  int_final(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*(knot(i_tmp + 1)**(order_prod - j_tmp + 2))/(order_prod - j_tmp + 2) ! +2 because of the integral that add one order
+int_final(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*(knot(i_tmp + 1)**(order_prod - j_tmp + 2))/(order_prod - j_tmp + 2) ! +2 because of the integral that add one order
                end if
                if (knot(i_tmp) /= zero) then
                   int_init(i_tmp, j_tmp) = produit(i_tmp, j_tmp)*(knot(i_tmp)**(order_prod - j_tmp + 2))/(order_prod - j_tmp + 2)
@@ -334,18 +335,75 @@ contains
 
    end subroutine int_Wdiag
 
-   ! For WLS
-   ! term1 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
-   ! order1 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+   subroutine int_WLS(b1, b2, Z, kappa, knot, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
 
-   ! term2 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
-   ! order2 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
 
-   ! term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2)-1), size(b2, 2)-2), size(b2, 2)-3) ! d^3r(b2)/r^3
-   ! order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+      zero = '0.d0'
+      one = '1.d0'
 
-   ! term4 = deriv_single(deriv_single(b2, size(b2, 2)-2), size(b2, 2)-3) ! d^2r((1+k)*b2/r)
-   ! order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
+      term1 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
+      order1 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+
+      term2 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
+      order2 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+
+      term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3) ! d^3r(b2)
+      order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+
+      term4 = deriv_single(deriv_single(multiply_elem(1 + kappa, b2), size(b2, 2) - 2), size(b2, 2) - 3) ! d^2r((1+k)*b2/r)
+      order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
+
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
+
+      result = -Z*(result1 - result2) + (result3 + result4)/2
+
+   end subroutine int_WLS
+
+   subroutine int_WSL(b1, b2, Z, kappa, knot, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real), intent(out) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      term1 = deriv_single(b2, size(b2, 2) - 1) ! dr(b2)/r
+      order1 = size(b2, 2) - 3 ! order init - 2 because derivative and divided by r
+
+      term2 = deriv_single(b2, size(b2, 2) - 2) ! dr (b2/r)
+      order2 = size(b2, 2) - 3 ! order init - 2 because divided by r and derivative
+
+      term3 = deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3) ! d^3r(b2)
+      order3 = size(b2, 2) - 4 ! order init - 3 because three derivative
+
+      term4 = deriv_single(deriv_single(multiply_elem(1 + kappa, b2), size(b2, 2) - 2), size(b2, 2) - 3) ! d^2r((1+k)*b2/r)
+      order4 = size(b2, 2) - 4 ! order init - 3 because two derivative and divided by r
+
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
+
+      result = -Z*(result1 - result2) + (result3 + result4)/2
+
+   end subroutine int_WSL
 
    subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, A, B, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
@@ -374,8 +432,7 @@ contains
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
 
-      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, k_mat, wdiag_mat
-      type(mp_real), allocatable, dimension(:, :) :: aprime_mat
+      type(mp_real), dimension(:, :), allocatable :: ovrlp_mat, deriv_mat, potential_mat, wdiag_mat, wls_mat, wsl_mat
 
       integer :: i_tmp, j_tmp
 
@@ -441,6 +498,52 @@ contains
       end do
       !$OMP END PARALLEL DO
 
+      ! Generate the matrix WLS
+      print *, "Generate WLS matrix"
+      allocate (wls_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, kappa, knot, WLS_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_WLS(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, kappa, knot, wls_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+      ! Generate the matrix WSS
+      print *, "Generate WSL matrix"
+      allocate (wsl_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, Z, kappa, knot, WSL_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            call int_WSL(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), Z, kappa, knot, WSL_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+      ! Generate the matrix A
+      print *, "Generate A matrix"
+      allocate (A(2*nprime, 2*nprime))
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            A(i_tmp, j_tmp) = deriv_mat(i_tmp, j_tmp) + potential_mat(i_tmp, j_tmp) + wdiag_mat(i_tmp, j_tmp)/(4*C**2)
+            A(i_tmp, j_tmp + nprime) = wls_mat(i_tmp, j_tmp)/(2*C)
+            A(i_tmp + nprime, j_tmp) = wsl_mat(i_tmp, j_tmp)/(2*C)
+            A(i_tmp + nprime, j_tmp + nprime) = -potential_mat(i_tmp, j_tmp) + 2*deriv_mat(i_tmp, j_tmp) - wdiag_mat(i_tmp, j_tmp)/(4*C**2) + 2*C**2 *ovrlp_mat(i_tmp, j_tmp)
+         end do
+      end do
+
+      ! Generate the matrix B
+      print *, "Generate B matrix"
+      allocate (B(2*nprime, 2*nprime))
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+            B(i_tmp, j_tmp) = -ovrlp_mat(i_tmp, j_tmp) + deriv_mat(i_tmp, j_tmp)/(2*C**2)
+            B(i_tmp, j_tmp + nprime) = zero
+            B(i_tmp + nprime, j_tmp) = zero
+            B(i_tmp + nprime, j_tmp + nprime) = -ovrlp_mat(i_tmp, j_tmp) - deriv_mat(i_tmp, j_tmp)/(2*C**2)
+         end do
+      end do
+
       if (present(log_bool) .and. log_bool) then
          print *, "Writing Logs"
          open (1, file="log_2.txt", status="replace")
@@ -469,8 +572,80 @@ contains
          do i_tmp = 1, nprime
             call write_lists(wdiag_mat(i_tmp, :), 1, i2, i3)
          end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines WLS Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(wls_mat(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "BSplines WSL Matrix : "
+         do i_tmp = 1, nprime
+            call write_lists(wsl_mat(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Matrix A : "
+         do i_tmp = 1, 2*nprime
+            call write_lists(A(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Matrix B : "
+         do i_tmp = 1, 2*nprime
+            call write_lists(B(i_tmp, :), 1, i2, i3)
+         end do
          close (1)
          print *, "Logs written"
       end if
    end subroutine matrixAB
+
+   subroutine get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, log_bool, i2, i3)
+      integer, intent(in) :: d, n, n_remove, i2, i3
+      type(mp_real), intent(in) :: Z, kappa, C, amin, amax
+      logical, intent(in), optional :: log_bool
+
+      integer :: nprime, i_tmp, ierr, method
+      type(mp_real) :: zero, one, clt
+      type(mp_real), dimension(:, :), allocatable :: A, B, vect
+      type(mp_real), dimension(:), allocatable :: w, fv1, fv2
+      character(len=100) :: log_file
+
+      zero = '0.d0'
+      one = '1.d0'
+
+      nprime = n - 2*n_remove
+      method = 0
+      clt = '0.5d0'
+
+      allocate (A(2*nprime, 2*nprime))
+      allocate (B(2*nprime, 2*nprime))
+
+      call matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, A, B, log_bool, i2, i3)
+
+      print *, "Calculating the eigenvalues"
+
+      allocate (w(2*nprime))
+      allocate (vect(2*nprime, 2*nprime))
+      allocate (fv1(2*nprime))
+      allocate (fv2(2*nprime))
+
+      call rsg(2*nprime, 2*nprime, A, B, w, 0, vect, fv1, fv2, ierr)
+
+      print *, "Error code: ", ierr
+
+      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
+
+      open (2, file=log_file, status="replace")
+
+      do i_tmp = 1, 2*nprime
+         ! if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
+         call mpwrite(2, i2, i3, w(i_tmp))
+         ! end if
+      end do
+
+      close (2)
+
+      deallocate (A, B, w, vect, fv1, fv2)
+
+      print *, "Eigenvalues written to ", log_file
+
+   end subroutine get_eigen
 end module bspline_mod

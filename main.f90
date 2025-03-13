@@ -6,8 +6,6 @@ program main
    integer :: d, n_remove, n
    type(mp_real) :: amin, amax, Z, C, kappa, zero, one
 
-   type(mp_real), dimension(:, :), allocatable :: Gauche, Droite
-
    zero = '0.d0'
    one = '1.d0'
 
@@ -23,10 +21,7 @@ program main
    amax = '1.d1'
    !-----------------------------------------------------------------!
 
-   allocate(Gauche(n - 2*n_remove, n - 2*n_remove))
-   allocate(Droite(n - 2*n_remove, n - 2*n_remove))
-
-   call matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, Gauche, Droite, .true., 45, 25)
+   call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
 
 end program main
 
