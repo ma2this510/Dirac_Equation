@@ -13,7 +13,7 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
+   d = 10 ! Order of Mathemathica + 1
    nmin = 20 ! Number minimal of B-Spline
    nmax = 1000 ! Number minimal of B-Spline
    step = 10 ! Number of Intermedier n
