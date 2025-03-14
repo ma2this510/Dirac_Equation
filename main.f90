@@ -11,14 +11,14 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
-   n = 8 ! Number of Bspline
+   d = 7 ! Order of Mathemathica + 1
+   n = 40 ! Number of Bspline
    n_remove = 2 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '1.d-1'
-   amax = '1.d1'
+   amin = '1.d-4'
+   amax = '4.d1'
    !-----------------------------------------------------------------!
 
    call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
