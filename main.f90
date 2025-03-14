@@ -14,15 +14,15 @@ program main
    !-----------------------------------------------------------------!
    ! Define Important Variables
    d = 10 ! Order of Mathemathica + 1
-   nmin = 20 ! Number minimal of B-Spline
-   nmax = 1000 ! Number minimal of B-Spline
-   step = 10 ! Number of Intermedier n
+   nmin = 40 ! Number minimal of B-Spline
+   nmax = 500 ! Number minimal of B-Spline
+   step = 3 ! Number of Intermedier n
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '2.d-3'
-   amax = '4.d1'
+   amin = '1.d-4'
+   amax = '1.d2'
    !-----------------------------------------------------------------!
 
    do i_tmp = 1, step
