@@ -25,6 +25,9 @@ program main
    amax = '1.d2'
    !-----------------------------------------------------------------!
 
+   print *, 'Theoric Value for n = 1:' 
+   call mpwrite(6, 50, 30, theoric_val(1, Z, kappa, C))
+
    do i_tmp = 1, step
       n = nint(nmin*(nmax/nmin)**(real(i_tmp - 1)/real(step - 1)))
       print *, 'Starting Process for n =', n, '& d =', d
@@ -35,6 +38,7 @@ program main
    print *, 'All Process Done and writen to ./result'
 
 end program main
+
 
 function epsilonn(alpha)
    !> @brief Calculate the machine epsilon

@@ -6,6 +6,7 @@ module bspline_mod
 
    private
 
+   public :: theoric_val
    public :: init_bspine
    public :: fusion_coef
    public :: print_table
@@ -18,6 +19,14 @@ module bspline_mod
    public :: get_eigen
 
 contains
+   function theoric_val(n, Z, kappa, C)
+      implicit none
+      integer, intent(in) :: n
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real) :: theoric_val
+
+      theoric_val = (C**2)/sqrt(1 + ((Z/C)**2)/(n - abs(kappa) + sqrt(kappa**2 - (Z/C)**2))**2) - C**2
+   end function theoric_val
 
    function fusion_coef(coef1, coef2)
       !> This function calculates the product of two polynoms
@@ -653,7 +662,7 @@ contains
       type(mp_real), intent(in) :: Z, kappa, C, amin, amax
       logical, intent(in), optional :: log_bool
 
-      integer :: nprime, i_tmp, ierr, method
+      integer :: nprime, i_tmp, ierr, method, solnum
       type(mp_real) :: zero, one, clt
       type(mp_real), dimension(:, :), allocatable :: A, B, vect
       type(mp_real), dimension(:), allocatable :: w, fv1, fv2
@@ -682,13 +691,15 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result/error_", n, "_", d, ".txt"
 
       open (2, file=log_file, status="replace")
 
+      solnum = 1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
-            call mpwrite(2, i2, i3, w(i_tmp))
+            call mpwrite(2, i2, i3, abs(w(i_tmp)-theoric_val(solnum,Z,kappa,C)))
+            solnum = solnum + 1
          end if
       end do
 
