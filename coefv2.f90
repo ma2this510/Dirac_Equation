@@ -21,7 +21,7 @@ contains
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real) :: theoric_val
 
-      theoric_val = (C**2)/sqrt(1 + ((Z/C)**2)/(n - abs(kappa) + sqrt(kappa**2 - (Z/C)**2))**2) - C**2
+      theoric_val = (C**2)/sqrt(1 + ((Z/C)**2)/(n - abs(kappa) + sqrt(kappa**2 - (Z/C)**2))**2)
    end function theoric_val
 
    function exp_knot(n, a_max, a_min, d, method, clt) result(result)
@@ -274,9 +274,9 @@ contains
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7
-      integer :: order1, order2, order3, order4, order5, order6, order7
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7, term8
+      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7, result8
+      integer :: order1, order2, order3, order4, order5, order6, order7, order8
 
       zero = '0.d0'
       one = '1.d0'
@@ -284,23 +284,26 @@ contains
       term1 = multiply_elem(-Z, deriv_single(b2, size(b2, 2) - 1))
       order1 = size(b1, 2) - 3
 
-      term2 = multiply_elem(-Z*kappa, b2)
-      order2 = size(b1, 2) - 3
+      term2 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order2 = size(b1, 2) - 4
 
-      term3 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      term3 = multiply_elem(-(kappa/2)*(kappa*(1 + kappa)), b2)
       order3 = size(b1, 2) - 4
 
-      term4 = multiply_elem(-(kappa/2)*(kappa*(1 + kappa)), b2)
-      order4 = size(b1, 2) - 4
+      term4 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order4 = size(b1, 2) - 3
 
-      term5 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 2))
+      term5 = multiply_elem(-Z, b2)
       order5 = size(b1, 2) - 3
 
       term6 = multiply_elem(one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
       order6 = size(b1, 2) - 4
 
-      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 3))
+      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 1))
       order7 = size(b1, 2) - 4
+
+      term8 = multiply_elem((kappa*(1 + kappa)), b2)
+      order8 = size(b1, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
@@ -309,12 +312,13 @@ contains
       call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
       call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
       call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
+      call integral(b1, size(b1, 2) - 1, term8, order8, knot, result8)
 
-      result = result1 + result2 + result3 + result4 + result5 + result6 + result7
+      result = (result1 + result2 + result3 + result4 + result5 + result6 + result7 + result8)/(2*C)
    end subroutine block_H21
 
    subroutine block_H12(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H12 NEED TO BE MODIFIED
+      !> @brief Calculate the block H12
       !> @param b1 : real(:,:) : the coef of the first B-spline
       !> @param b2 : real(:,:) : the coef of the second B-spline
       !> @param knot : real(:) : the knot vector
@@ -328,9 +332,9 @@ contains
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7
-      integer :: order1, order2, order3, order4, order5, order6, order7
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7, term8
+      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7, result8
+      integer :: order1, order2, order3, order4, order5, order6, order7, order8
 
       zero = '0.d0'
       one = '1.d0'
@@ -338,23 +342,26 @@ contains
       term1 = multiply_elem(-Z, deriv_single(b2, size(b2, 2) - 1))
       order1 = size(b2, 2) - 3
 
-      term2 = multiply_elem(Z*kappa, b2)
-      order2 = size(b2, 2) - 3
+      term2 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order2 = size(b2, 2) - 4
 
-      term3 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      term3 = multiply_elem((kappa/2)*(kappa*(1 - kappa)), b2)
       order3 = size(b2, 2) - 4
 
-      term4 = multiply_elem((kappa/2)*(kappa*(1 - kappa)), b2)
-      order4 = size(b2, 2) - 4
+      term4 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order4 = size(b2, 2) - 3
 
-      term5 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 2))
+      term5 = multiply_elem(-Z, b2)
       order5 = size(b2, 2) - 3
 
       term6 = multiply_elem(-one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
       order6 = size(b2, 2) - 4
 
-      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 3))
+      term7 = multiply_elem(-1/2*(kappa*(1 - kappa)), deriv_single(b2, size(b2, 2) - 1))
       order7 = size(b2, 2) - 4
+
+      term8 = multiply_elem((kappa*(1 - kappa)), b2)
+      order8 = size(b2, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
@@ -363,8 +370,9 @@ contains
       call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
       call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
       call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
+      call integral(b1, size(b1, 2) - 1, term8, order8, knot, result8)
 
-      result = result1 + result2 + result3 + result4 + result5 + result6 + result7
+      result = (result1 + result2 + result3 + result4 + result5 + result6 + result7 + result8)/(2*C)
    end subroutine block_H12
 
    subroutine block_S11(b1, b2, knot, Z, kappa, C, result)
@@ -433,7 +441,7 @@ contains
       term2 = multiply_elem(-1/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order2 = size(b2, 2) - 3
 
-      term3 = multiply_elem(-kappa*(1 + kappa)/(4*C**2), b2)
+      term3 = multiply_elem(-kappa*(1 - kappa)/(4*C**2), b2)
       order3 = size(b2, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
@@ -564,8 +572,8 @@ contains
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
             H_mat(i_tmp, j_tmp) = H11_mat(i_tmp, j_tmp)
-            H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
-            H_mat(i_tmp + nprime, j_tmp) = H12_mat(j_tmp, i_tmp)
+            H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
+            H_mat(i_tmp + nprime, j_tmp) = H21_mat(i_tmp, j_tmp)
             H_mat(i_tmp + nprime, j_tmp + nprime) = H22_mat(i_tmp, j_tmp)
          end do
       end do
@@ -611,7 +619,7 @@ contains
       logical, intent(in), optional :: log_bool
 
       integer :: nprime, i_tmp, ierr, method, solnum
-      type(mp_real) :: zero, one, clt
+      type(mp_real) :: clt
       type(mp_real), dimension(:, :), allocatable :: A, B, vect
       type(mp_real), dimension(:), allocatable :: w, fv1, fv2
       character(len=100) :: log_file
@@ -639,15 +647,33 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result/error_", n, "_", d, ".txt"
+
 
       open (2, file=log_file, status="replace")
 
-      ! solnum = 1
+      solnum = 1
       do i_tmp = 1, 2*nprime
-         ! if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
-         call mpwrite(2, i2, i3, w(i_tmp))
-         ! end if
+         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp)-c**2) < 1.d3*one) then
+            call mpwrite(2, i2, i3, abs(w(i_tmp) - theoric_val(solnum, Z, kappa, C)))
+            solnum = solnum + 1
+         end if
+      end do
+
+      close (2)
+
+      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
+      
+      print *, "Errors written to ", log_file
+
+      open (2, file=log_file, status="replace")
+
+      solnum = 1
+      do i_tmp = 1, 2*nprime
+         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp)-c**2) < 1.d3*one) then
+            call mpwrite(2, i2, i3, w(i_tmp) - C**2)
+            solnum = solnum + 1
+         end if
       end do
 
       close (2)
