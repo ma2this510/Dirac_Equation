@@ -8,11 +8,21 @@ module bspline_mod
 
    private
 
+   public :: theoric_val
    public :: exp_knot
    public :: matrixAB
    public :: get_eigen
 
 contains
+
+   function theoric_val(n, Z, kappa, C)
+      implicit none
+      integer, intent(in) :: n
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real) :: theoric_val
+
+      theoric_val = (C**2)/sqrt(1 + ((Z/C)**2)/(n - abs(kappa) + sqrt(kappa**2 - (Z/C)**2))**2) - C**2
+   end function theoric_val
 
    function exp_knot(n, a_max, a_min, d, method, clt) result(result)
       !> @brief Generate a knot vector with exponential distribution
@@ -289,7 +299,7 @@ contains
       term6 = multiply_elem(one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
       order6 = size(b1, 2) - 4
 
-      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)),deriv_single(b2, size(b2, 2) - 3))
+      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 3))
       order7 = size(b1, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
@@ -304,7 +314,7 @@ contains
    end subroutine block_H21
 
    subroutine block_H12(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H12
+      !> @brief Calculate the block H12 NEED TO BE MODIFIED
       !> @param b1 : real(:,:) : the coef of the first B-spline
       !> @param b2 : real(:,:) : the coef of the second B-spline
       !> @param knot : real(:) : the knot vector
@@ -343,7 +353,7 @@ contains
       term6 = multiply_elem(-one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
       order6 = size(b2, 2) - 4
 
-      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)),deriv_single(b2, size(b2, 2) - 3))
+      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 3))
       order7 = size(b2, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
@@ -385,14 +395,14 @@ contains
       term2 = multiply_elem(-1/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order2 = size(b2, 2) - 3
 
-      term3 = multiply_elem(kappa*(1+kappa)/(4*C**2), b2)
+      term3 = multiply_elem(kappa*(1 + kappa)/(4*C**2), b2)
       order3 = size(b2, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
 
-      result = result1 + result2 + result3 
+      result = result1 + result2 + result3
    end subroutine block_S11
 
    subroutine block_S22(b1, b2, knot, Z, kappa, C, result)
@@ -423,14 +433,14 @@ contains
       term2 = multiply_elem(-1/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order2 = size(b2, 2) - 3
 
-      term3 = multiply_elem(-kappa*(1+kappa)/(4*C**2), b2)
+      term3 = multiply_elem(-kappa*(1 + kappa)/(4*C**2), b2)
       order3 = size(b2, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
 
-      result = result1 + result2 + result3 
+      result = result1 + result2 + result3
    end subroutine block_S22
 
    subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, H_mat, S_mat, log_bool, i2, i3)
@@ -488,7 +498,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H11_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_H11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H11_mat(i_tmp, j_tmp))
+          call block_H11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H11_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -499,7 +509,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H22_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_H22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H22_mat(i_tmp, j_tmp))
+          call block_H22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H22_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -510,7 +520,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H12_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_H12(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H12_mat(i_tmp, j_tmp))
+          call block_H12(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H12_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -521,7 +531,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H21_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_H21(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H21_mat(i_tmp, j_tmp))
+          call block_H21(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H21_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -532,7 +542,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, S11_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_S11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S11_mat(i_tmp, j_tmp))
+          call block_S11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S11_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -543,7 +553,7 @@ contains
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, S22_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            call block_S22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S22_mat(i_tmp, j_tmp))
+          call block_S22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S22_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -554,8 +564,8 @@ contains
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
             H_mat(i_tmp, j_tmp) = H11_mat(i_tmp, j_tmp)
-            H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp)
-            H_mat(i_tmp + nprime, j_tmp) = H21_mat(i_tmp, j_tmp)
+            H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
+            H_mat(i_tmp + nprime, j_tmp) = H12_mat(j_tmp, i_tmp)
             H_mat(i_tmp + nprime, j_tmp + nprime) = H22_mat(i_tmp, j_tmp)
          end do
       end do
@@ -600,7 +610,7 @@ contains
       type(mp_real), intent(in) :: Z, kappa, C, amin, amax
       logical, intent(in), optional :: log_bool
 
-      integer :: nprime, i_tmp, ierr, method
+      integer :: nprime, i_tmp, ierr, method, solnum
       type(mp_real) :: zero, one, clt
       type(mp_real), dimension(:, :), allocatable :: A, B, vect
       type(mp_real), dimension(:), allocatable :: w, fv1, fv2
@@ -633,6 +643,7 @@ contains
 
       open (2, file=log_file, status="replace")
 
+      ! solnum = 1
       do i_tmp = 1, 2*nprime
          ! if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
          call mpwrite(2, i2, i3, w(i_tmp))
