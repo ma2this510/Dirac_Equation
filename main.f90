@@ -14,15 +14,15 @@ program main
    !-----------------------------------------------------------------!
    ! Define Important Variables
    d = 10 ! Order of Mathemathica + 1
-   nmin = 40 ! Number minimal of B-Spline
-   nmax = 500 ! Number minimal of B-Spline
-   step = 3 ! Number of Intermedier n
+   nmin = 20 ! Number minimal of B-Spline
+   nmax = 1000 ! Number minimal of B-Spline
+   step = 20 ! Number of Intermedier n
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '1.d-4'
-   amax = '1.d2'
+   amin = '1.d-5'
+   amax = '1.d3'
    !-----------------------------------------------------------------!
 
    print *, 'Theoric Value for n = 1:' 

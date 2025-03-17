@@ -691,7 +691,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result/error_", n, "_", d, ".txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_ext/error_", n, "_", d, ".txt"
 
       open (2, file=log_file, status="replace")
 
