@@ -647,14 +647,26 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result/error_", n, "_", d, ".txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, ".txt"
 
+      open (2, file=log_file)
 
-      open (2, file=log_file, status="replace")
+      write (2, '(a, i4, a, i4)') "Number of BSplines: ", n, " and Order of BSplines: ", d
+      write (2, '(a)') "Speed of light: "
+      call mpwrite(2, i2, i3, C)
+      write (2, '(a)') "Relativistic quantum number: "
+      call mpwrite(2, i2, i3, kappa)
+      write (2, '(a)') "Potential constant: "
+      call mpwrite(2, i2, i3, Z)
+      write (2, '(a)') "Knot min: "
+      call mpwrite(2, i2, i3, amin)
+      write (2, '(a)') "Knot max: "
+      call mpwrite(2, i2, i3, amax)
+      write (2, '(a)') "--------------------------------------------------------------"
 
       solnum = 1
       do i_tmp = 1, 2*nprime
-         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp)-c**2) < 1.d3*one) then
+         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp) - c**2) < 1.d3*one) then
             call mpwrite(2, i2, i3, abs(w(i_tmp) - theoric_val(solnum, Z, kappa, C)))
             solnum = solnum + 1
          end if
@@ -662,15 +674,28 @@ contains
 
       close (2)
 
-      write (log_file, '(a,I4,a,I2,a)') "./result/eigenvalues_", n, "_", d, ".txt"
-      
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, ".txt"
+
       print *, "Errors written to ", log_file
 
-      open (2, file=log_file, status="replace")
+      open (2, file=log_file)
+
+      write (2, '(a, i4, a, i4)') "Number of BSplines: ", n, " and Order of BSplines: ", d
+      write (2, '(a)') "Speed of light: "
+      call mpwrite(2, i2, i3, C)
+      write (2, '(a)') "Relativistic quantum number: "
+      call mpwrite(2, i2, i3, kappa)
+      write (2, '(a)') "Potential constant: "
+      call mpwrite(2, i2, i3, Z)
+      write (2, '(a)') "Knot min: "
+      call mpwrite(2, i2, i3, amin)
+      write (2, '(a)') "Knot max: "
+      call mpwrite(2, i2, i3, amax)
+      write (2, '(a)') "--------------------------------------------------------------"
 
       solnum = 1
       do i_tmp = 1, 2*nprime
-         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp)-c**2) < 1.d3*one) then
+         if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp) - c**2) < 1.d3*one) then
             call mpwrite(2, i2, i3, w(i_tmp) - C**2)
             solnum = solnum + 1
          end if

@@ -3,7 +3,7 @@ program main
    use bspline_mod
    implicit none
 
-   integer :: d, n_remove, n
+   integer :: d, n_remove, nmin, nmax, step, i_tmp, n
    type(mp_real) :: amin, amax, Z, C, kappa, zero, one
 
    zero = '0.d0'
@@ -12,7 +12,9 @@ program main
    !-----------------------------------------------------------------!
    ! Define Important Variables
    d = 8 ! Order of Mathemathica + 1
-   n = 40 ! Number of Bspline
+   nmin = 20 ! Number minimal of B-Spline
+   nmax = 1000 ! Number minimal of B-Spline
+   step = 10 ! Number of Intermedier n
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
@@ -21,11 +23,17 @@ program main
    amax = '5.d1'
    !-----------------------------------------------------------------!
 
-   print *, 'Theoric Value for n = 1:' 
-   call mpwrite(6, 50, 30, theoric_val(1, Z, kappa, C)-C**2)
+   print *, 'Theoric Value for n = 1:'
+   call mpwrite(6, 50, 30, theoric_val(1, Z, kappa, C) - C**2)
+   do i_tmp = 1, step
+      n = nint(nmin*(nmax/nmin)**(real(i_tmp - 1)/real(step - 1)))
 
-   call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
+      print *, 'Starting Process for n =', n, '& d =', d
 
+      call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
+   end do
+
+   print *, 'All Process Done and writen to ./result_DKB'
 end program main
 
 function epsilonn(alpha)
