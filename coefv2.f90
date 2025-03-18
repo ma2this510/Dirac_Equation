@@ -695,6 +695,19 @@ contains
 
       open (2, file=log_file, status="replace")
 
+      write (2, '(a, i4, a, i4)') "Number of BSplines: ", n, " and Order of BSplines: ", d
+      write (2, '(a)') "Speed of light: "
+      call mpwrite(2, i2, i3, C)
+      write (2, '(a)') "Relativistic quantum number: "
+      call mpwrite(2, i2, i3, kappa)
+      write (2, '(a)') "Potential constant: "
+      call mpwrite(2, i2, i3, Z)
+      write (2, '(a)') "Knot min: "
+      call mpwrite(2, i2, i3, amin)
+      write (2, '(a)') "Knot max: "
+      call mpwrite(2, i2, i3, amax)
+      write (2, '(a)') "--------------------------------------------------------------"
+
       solnum = 1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
