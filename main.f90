@@ -13,7 +13,7 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
+   d = 10 ! Order of Mathemathica + 1
    ! nmin = 20 ! Number minimal of B-Spline
    ! nmax = 1000 ! Number minimal of B-Spline
    ! step = 20 ! Number of Intermedier n
@@ -22,7 +22,7 @@ program main
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '1.d-3'
+   amin = '1.d-4'
    amax = '5.d3'
    !-----------------------------------------------------------------!
 
