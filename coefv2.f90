@@ -611,7 +611,7 @@ contains
 
       if (present(log_bool) .and. log_bool) then
          print *, "Writing Logs"
-         open (1, file="log_2.txt", status="replace")
+         open (1, file="log_2.log", status="replace")
 
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
@@ -691,7 +691,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_800/error_", n, "_", d, "_-6.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_800/error_", n, "_", d, "_-7.txt"
 
       open (2, file=log_file, status="replace")
 
