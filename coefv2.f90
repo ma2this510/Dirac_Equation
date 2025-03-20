@@ -230,22 +230,22 @@ contains
       term1 = multiply_elem(3*one/4, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order1 = size(b1, 2) - 3
 
-      term2 = multiply_elem(Z/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      term2 = multiply_elem(Z/(4*(C**2)), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order2 = size(b1, 2) - 4
 
-      term3 = multiply_elem(-Z/(4*C**2), deriv_single(b2, size(b2, 2) - 1))
+      term3 = multiply_elem(-Z/(4*(C**2)), deriv_single(b2, size(b2, 2) - 1))
       order3 = size(b1, 2) - 4
 
-      term4 = multiply_elem(-Z/(4*C**2)*(kappa*(kappa - 2)), b2)
+      term4 = multiply_elem(-Z/(4*(C**2))*(kappa*(kappa - 2)), b2)
       order4 = size(b1, 2) - 4
 
-      term5 = multiply_elem((3/4)*(kappa*(1 - kappa)), b2)
+      term5 = multiply_elem((kappa*(1 - kappa))*3/4, b2)
       order5 = size(b1, 2) - 3
 
       term6 = multiply_elem(-Z, b2)
       order6 = size(b1, 2) - 2
 
-      term7 = multiply_elem(-C**2, b2)
+      term7 = multiply_elem(-(C**2), b2)
       order7 = size(b1, 2) - 1
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
@@ -332,36 +332,30 @@ contains
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7, term8
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7, result8
-      integer :: order1, order2, order3, order4, order5, order6, order7, order8
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6
+      type(mp_real) :: result1, result2, result3, result4, result5, result6
+      integer :: order1, order2, order3, order4, order5, order6
 
       zero = '0.d0'
       one = '1.d0'
 
-      term1 = multiply_elem(-Z, deriv_single(b2, size(b2, 2) - 1))
-      order1 = size(b2, 2) - 3
+      term1 = multiply_elem(kappa/2, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order1 = size(b1, 2) - 4
 
-      term2 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b2, 2) - 4
+      term2 = multiply_elem(kappa*kappa*(1 - kappa)/2, b2)
+      order2 = size(b1, 2) - 4
+      
+      term3 = multiply_elem(-Z, b2)
+      order3 = size(b1, 2) - 3
 
-      term3 = multiply_elem((kappa/2)*(kappa*(1 - kappa)), b2)
-      order3 = size(b2, 2) - 4
+      term4 = multiply_elem(-one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
+      order4 = size(b1, 2) - 4
 
-      term4 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
-      order4 = size(b2, 2) - 3
+      term5 = multiply_elem(-1*(kappa*(1 - kappa))/2, deriv_single(b2, size(b2, 2) - 1))
+      order5 = size(b1, 2) - 4
 
-      term5 = multiply_elem(-Z, b2)
-      order5 = size(b2, 2) - 3
-
-      term6 = multiply_elem(-one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
-      order6 = size(b2, 2) - 4
-
-      term7 = multiply_elem(-1/2*(kappa*(1 - kappa)), deriv_single(b2, size(b2, 2) - 1))
-      order7 = size(b2, 2) - 4
-
-      term8 = multiply_elem((kappa*(1 - kappa)), b2)
-      order8 = size(b2, 2) - 4
+      term6 = multiply_elem(kappa*(1 - kappa), b2)
+      order6 = size(b1, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
@@ -369,10 +363,8 @@ contains
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
       call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
       call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
-      call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
-      call integral(b1, size(b1, 2) - 1, term8, order8, knot, result8)
 
-      result = (result1 + result2 + result3 + result4 + result5 + result6 + result7 + result8)/(2*C)
+      result = (result1 + result2 + result3 + result4 + result5 + result6)/(2*C)
    end subroutine block_H12
 
    subroutine block_S11(b1, b2, knot, Z, kappa, C, result)
@@ -572,7 +564,8 @@ contains
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
             H_mat(i_tmp, j_tmp) = H11_mat(i_tmp, j_tmp)
-            H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
+            ! H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
+            H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
             H_mat(i_tmp + nprime, j_tmp) = H21_mat(i_tmp, j_tmp)
             H_mat(i_tmp + nprime, j_tmp + nprime) = H22_mat(i_tmp, j_tmp)
          end do
@@ -598,6 +591,11 @@ contains
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
          write (1, '(a)') "Knots: "
          call write_lists(knot, 1, i2, i3)
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Matrix H12 : "
+         do i_tmp = 1, nprime
+            call write_lists(H12_mat(i_tmp, :), 1, i2, i3)
+         end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix H : "
          do i_tmp = 1, 2*nprime
