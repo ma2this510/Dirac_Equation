@@ -13,11 +13,11 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
-   ! nmin = 20 ! Number minimal of B-Spline
-   ! nmax = 1000 ! Number minimal of B-Spline
-   ! step = 20 ! Number of Intermedier n
-   n = 1100
+   d = 7 ! Order of Mathemathica + 1
+   nmin = 20 ! Number minimal of B-Spline
+   nmax = 1200 ! Number minimal of B-Spline
+   step = 20 ! Number of Intermedier n
+   ! n = 1100
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
@@ -29,13 +29,13 @@ program main
    print *, 'Theoric Value for n = 1:'
    call mpwrite(6, 50, 30, theoric_val(1, Z, kappa, C))
 
-   ! do i_tmp = 1, step
-   ! n = nint(nmin*(nmax/nmin)**(real(i_tmp - 1)/real(step - 1)))
+   do i_tmp = 1, step
+   n = nint(nmin*(nmax/nmin)**(real(i_tmp - 1)/real(step - 1)))
    print *, 'Starting Process for n =', n, '& d =', d
 
    call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .false., 45, 25)
 
-   !end do
+   end do
    print *, 'All Process Done and writen to ./result'
 
 end program main
