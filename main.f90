@@ -17,7 +17,7 @@ program main
    ! nmin = 20 ! Number minimal of B-Spline
    ! nmax = 1000 ! Number minimal of B-Spline
    ! step = 20 ! Number of Intermedier n
-   n = 1000
+   n = 1100
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
