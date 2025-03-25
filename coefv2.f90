@@ -585,7 +585,7 @@ contains
 
       if (present(log_bool) .and. log_bool) then
          print *, "Writing Logs"
-         open (1, file="log_2.txt", status="replace")
+         open (1, file="log_2.log", status="replace")
 
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
