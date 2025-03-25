@@ -12,16 +12,16 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 4 ! Order of Mathemathica + 1
+   d = 8 ! Order of Mathemathica + 1
    ! nmin = 20 ! Number minimal of B-Spline
    ! nmax = 1000 ! Number minimal of B-Spline
    ! step = 10 ! Number of Intermedier n
    n_remove = 2 ! Number of Bspline to remove at the start and the end
-   n = 8
+   n = 80
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '1.d-1'
+   amin = '1.d-4'
    amax = '1.d1'
    !-----------------------------------------------------------------!
 
@@ -32,7 +32,7 @@ program main
 
       print *, 'Starting Process for n =', n, '& d =', d
 
-      call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 45, 25)
+      call get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, .true., 100, 80)
    ! end do
 
    print *, 'All Process Done and writen to ./result_DKB'
