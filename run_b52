@@ -7,5 +7,6 @@
 #SBATCH --mail-type=ALL
 
 hostname
+make main.out
 export OMP_NUM_THREADS=$SLURM_TASKS_PER_NODE
 time ./main.out
