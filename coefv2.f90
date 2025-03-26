@@ -344,7 +344,7 @@ contains
 
       term2 = multiply_elem(kappa*kappa*(1 - kappa)/2, b2)
       order2 = size(b1, 2) - 4
-      
+
       term3 = multiply_elem(-Z, b2)
       order3 = size(b1, 2) - 3
 
@@ -469,7 +469,7 @@ contains
 
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
-
+      type(mp_real), dimension(:), allocatable :: tmp
       type(mp_real), dimension(:, :), allocatable :: H11_mat, H12_mat, H21_mat, H22_mat, S11_mat, S22_mat
 
       integer :: i_tmp, j_tmp
@@ -515,15 +515,16 @@ contains
       !$OMP END PARALLEL DO
 
       ! Generate the H12 matrix
-      print *, "Generate H12 matrix"
-      allocate (H12_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H12_mat, nprime)
-      do i_tmp = 1, nprime
-         do j_tmp = 1, nprime
-          call block_H12(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H12_mat(i_tmp, j_tmp))
-         end do
-      end do
-      !$OMP END PARALLEL DO
+      ! Warning for now cause singularities thus use transpose of H21 instead
+      ! print *, "Generate H12 matrix"
+      ! allocate (H12_mat(nprime, nprime))
+      ! !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H12_mat, nprime)
+      ! do i_tmp = 1, nprime
+      !    do j_tmp = 1, nprime
+      !     call block_H12(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H12_mat(i_tmp, j_tmp))
+      !    end do
+      ! end do
+      ! !$OMP END PARALLEL DO
 
       ! Generate the H21 matrix
       print *, "Generate H21 matrix"
@@ -564,8 +565,8 @@ contains
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
             H_mat(i_tmp, j_tmp) = H11_mat(i_tmp, j_tmp)
-            ! H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
-            H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
+            H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
+            ! H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
             H_mat(i_tmp + nprime, j_tmp) = H21_mat(i_tmp, j_tmp)
             H_mat(i_tmp + nprime, j_tmp + nprime) = H22_mat(i_tmp, j_tmp)
          end do
@@ -587,15 +588,30 @@ contains
          print *, "Writing Logs"
          open (1, file="log_2.log", status="replace")
 
+         allocate (tmp(nprime))
+
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
          write (1, '(a)') "Knots: "
          call write_lists(knot, 1, i2, i3)
+         ! write (1, '(a)') "----------------------------------------------------------------"
+         ! write (1, '(a)') "Matrix H12 : "
+         ! do i_tmp = 1, nprime
+         !    call write_lists(H12_mat(i_tmp, :), 1, i2, i3)
+         ! end do
          write (1, '(a)') "----------------------------------------------------------------"
-         write (1, '(a)') "Matrix H12 : "
+         write (1, '(a)') "Matrix H21 : "
          do i_tmp = 1, nprime
-            call write_lists(H12_mat(i_tmp, :), 1, i2, i3)
+            call write_lists(H21_mat(i_tmp, :), 1, i2, i3)
          end do
+         ! write (1, '(a)') "----------------------------------------------------------------"
+         ! write (1, '(a)') "Matrix H12 - H21^T: "
+         ! do i_tmp = 1, nprime
+         !    do j_tmp = 1, nprime
+         !       tmp(j_tmp) = H12_mat(i_tmp, j_tmp) - H21_mat(j_tmp, i_tmp)
+         !    end do
+         !    call write_lists(tmp, 1, i2, i3)
+         ! end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix H : "
          do i_tmp = 1, 2*nprime
@@ -672,9 +688,9 @@ contains
 
       close (2)
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, ".txt"
-
       print *, "Errors written to ", log_file
+
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, ".txt"
 
       open (2, file=log_file)
 
