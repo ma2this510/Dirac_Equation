@@ -1,4 +1,4 @@
-Number of BSplines:    8 and Order of BSplines:    4
+Number of BSplines:    8, Order of BSplines:    4, Removed Bsplines   2
 Speed of light: 
 1.370359895000000000000000000000000000000000000000000000000000000000000000000000e2                  
 Relativistic quantum number: 

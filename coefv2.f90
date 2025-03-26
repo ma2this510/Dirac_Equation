@@ -665,7 +665,7 @@ contains
 
       open (2, file=log_file)
 
-      write (2, '(a, i4, a, i4, a, i4)') "Number of BSplines: ", n, ", Order of BSplines: ", d, "removed Bsplines", n_remove
+      write (2, '(a, i4, a, i4, a, i4)') "Number of BSplines: ", n, ", Order of BSplines: ", d, ", Removed Bsplines", n_remove
       write (2, '(a)') "Speed of light: "
       call mpwrite(2, i2, i3, C)
       write (2, '(a)') "Relativistic quantum number: "
@@ -694,7 +694,7 @@ contains
 
       open (2, file=log_file)
 
-      write (2, '(a, i4, a, i4)') "Number of BSplines: ", n, " and Order of BSplines: ", d
+      write (2, '(a, i4, a, i4, a, i4)') "Number of BSplines: ", n, ", Order of BSplines: ", d, ", Removed Bsplines", n_remove
       write (2, '(a)') "Speed of light: "
       call mpwrite(2, i2, i3, C)
       write (2, '(a)') "Relativistic quantum number: "
