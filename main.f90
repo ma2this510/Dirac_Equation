@@ -17,12 +17,12 @@ program main
    ! nmax = 1000 ! Number minimal of B-Spline
    ! step = 10 ! Number of Intermedier n
    n_remove = 2 ! Number of Bspline to remove at the start and the end
-   n = 80
+   n = 300
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-   amin = '1.d-4'
-   amax = '1.d1'
+   amin = '1.d-5'
+   amax = '5.d1'
    !-----------------------------------------------------------------!
 
    print *, 'Theoric Value for n = 1:'
