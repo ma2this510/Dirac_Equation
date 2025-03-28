@@ -1,5 +1,5 @@
 FC = gfortran
-FFLAGS = -O3 -fopenmp -march=native
+FFLAGS = -O3 -fopenmp -march=native -ffast-math
 DEBUG_FLAGS = -fopenmp -g -Wall -Wextra -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=-99999
 MARG = Makefile
 

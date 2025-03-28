@@ -330,12 +330,12 @@ contains
       order3 = size(b1, 2) - 2
 
       term4 = multiply_elem(Z*kappa, b2)
-      order4 = size(b1, 2) - 2
+      order4 = size(b1, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term3, order3, knot, result3)
-      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term4, order4, knot, result4)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
 
       result = result1 + result2 + result3 + result4
    end subroutine matrix_A_plus
@@ -361,12 +361,12 @@ contains
       order3 = size(b1, 2) - 2
 
       term4 = multiply_elem(-Z*kappa, b2)
-      order4 = size(b1, 2) - 2
+      order4 = size(b1, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term3, order3, knot, result3)
-      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term4, order4, knot, result4)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
 
       result = result1 + result2 + result3 + result4
    end subroutine matrix_A_minus
@@ -584,7 +584,7 @@ contains
       !$OMP END PARALLEL DO
 
 
-      print *, "Generate B+ matrix"
+      print *, "Generate B- matrix"
       allocate (B_minus_mat(nprime, nprime))
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, B_minus_mat, nprime)
       do i_tmp = 1, nprime
@@ -686,7 +686,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_4.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_1.txt"
 
       open (2, file=log_file)
 
