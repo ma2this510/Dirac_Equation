@@ -258,65 +258,25 @@ contains
       type(mp_real) :: result1, result2, result3, result4
       integer :: order1, order2, order3, order4
 
-      term1 = multiply_elem(-Z, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order1 = size(b1, 2) - 4
+      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order1 = size(b1, 2) - 3
 
-      term2 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
-      order2 = size(b1, 2) - 4
+      term2 = multiply_elem(Z*kappa, b2)
+      order2 = size(b1, 2) - 3
 
-      term3 = multiply_elem(2*Z*kappa, b2)
+      term3 = multiply_elem(Z*kappa, deriv_single(b2, size(b2, 2) - 1))
       order3 = size(b1, 2) - 4
 
-      term4 = multiply_elem(kappa*kappa*Z, b2)
+      term4 = multiply_elem(Z*kappa*kappa, b2)
       order4 = size(b1, 2) - 4
 
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term1, order1, knot, result1)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
 
       result = result1 + result2 + result3 + result4
    end subroutine matrix_W_plus
-
-   subroutine coef_W_plus(b1, b2, knot, Z, kappa, C, order, result)
-      ! Not working yet
-      implicit none
-      type(mp_real), intent(in), dimension(:, :) :: b1, b2
-      type(mp_real), intent(in) :: Z, kappa, C
-      type(mp_real), intent(in) :: knot(:)
-      integer, intent(in) :: order
-      type(mp_real) :: result
-
-      integer :: i_tmp
-
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1
-      type(mp_real), dimension(size(b1, 1), 2*size(b1, 2)-1) :: produit
-      type(mp_real) :: epsilon, result1, result2
-      integer :: order1, order_tot
-
-      epsilon = zero
-
-      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
-      order1 = size(b2, 2) - 3
-      call evaluate_poly(term1(order, :), order1, epsilon, result1)
-      call mpwrite(6, 50, 30, result1)
-
-      call evaluate_poly(b1(order, :), size(b1, 2) - 1, epsilon, result2)
-      call mpwrite(6, 50, 30, result2)
-
-      produit = zero
-      order_tot = (size(b1, 2) - 1) * order1
-      do i_tmp = 1, size(b1, 1) ! Loop over the number of Piecewise polynomial
-         produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), term1(i_tmp, :))
-      end do
-      print *, "Eval poly"
-
-      print *, "Order tot = ", order_tot
-      call write_lists(produit(order, :), 6, 50, 30)
-
-      call evaluate_poly(produit(order, :), order_tot, epsilon, result)
-      call mpwrite(6, 50, 30, result)
-   end subroutine coef_W_plus
 
    subroutine matrix_W_minus(b1, b2, knot, Z, kappa, C, result)
       implicit none
@@ -329,39 +289,87 @@ contains
       type(mp_real) :: result1, result2, result3, result4
       integer :: order1, order2, order3, order4
 
-      term1 = multiply_elem(-Z, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order1 = size(b1, 2) - 4
+      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order1 = size(b1, 2) - 3
 
-      term2 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
-      order2 = size(b1, 2) - 4
+      term2 = multiply_elem(-Z*kappa, b2)
+      order2 = size(b1, 2) - 3
 
-      term3 = multiply_elem(-2*Z*kappa, b2)
+      term3 = multiply_elem(-Z*kappa, deriv_single(b2, size(b2, 2) - 1))
       order3 = size(b1, 2) - 4
 
-      term4 = multiply_elem(kappa*kappa*Z, b2)
+      term4 = multiply_elem(Z*kappa*kappa, b2)
       order4 = size(b1, 2) - 4
 
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term1, order1, knot, result1)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
 
       result = result1 + result2 + result3 + result4
    end subroutine matrix_W_minus
 
-   subroutine matrix_A(b1, b2, knot, Z, kappa, C, result)
+   subroutine matrix_A_plus(b1, b2, knot, Z, kappa, C, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
 
-      term1 = multiply_elem(Z, b2)
+      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order1 = size(b1, 2) - 3
 
-      call integral(b1, size(b1, 2) - 1, term1, size(b2, 2) - 3, knot, result)
-   end subroutine matrix_A
+      term2 = multiply_elem(-Z*kappa, b2)
+      order2 = size(b1, 2) - 3
+
+      term3 = multiply_elem(Z, b2)
+      order3 = size(b1, 2) - 2
+
+      term4 = multiply_elem(Z*kappa, b2)
+      order4 = size(b1, 2) - 2
+
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term3, order3, knot, result3)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term4, order4, knot, result4)
+
+      result = result1 + result2 + result3 + result4
+   end subroutine matrix_A_plus
+
+   subroutine matrix_A_minus(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
+
+      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order1 = size(b1, 2) - 3
+
+      term2 = multiply_elem(Z*kappa, b2)
+      order2 = size(b1, 2) - 3
+
+      term3 = multiply_elem(Z, b2)
+      order3 = size(b1, 2) - 2
+
+      term4 = multiply_elem(-Z*kappa, b2)
+      order4 = size(b1, 2) - 2
+
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term3, order3, knot, result3)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term4, order4, knot, result4)
+
+      result = result1 + result2 + result3 + result4
+   end subroutine matrix_A_minus
 
    subroutine matrix_B_plus(b1, b2, knot, Z, kappa, C, result)
       implicit none
@@ -370,34 +378,28 @@ contains
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5
-      type(mp_real) :: result1, result2, result3, result4, result5
-      integer :: order1, order2, order3, order4, order5
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
 
-      one = '1.d0'
+      term1 = deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2)
+      order1 = size(b1, 2) - 3
 
-      term1 = multiply_elem(-one, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
-      order1 = size(b2, 2) - 4
+      term2 = multiply_elem(kappa*(1-kappa), b2)
+      order2 = size(b1, 2) - 3
 
-      term2 = multiply_elem(-kappa*(1-kappa), deriv_single(b2, size(b2, 2) - 1))
-      order2 = size(b2, 2) - 4
+      term3 = multiply_elem(kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order3 = size(b1, 2) - 4
 
-      term3 = multiply_elem(2*kappa*(1-kappa), b2)
-      order3 = size(b2, 2) - 4
+      term4 = multiply_elem(kappa*kappa*(1-kappa), b2)
+      order4 = size(b1, 2) - 4
 
-      term4 = multiply_elem(kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order4 = size(b2, 2) - 4
-
-      term5 = multiply_elem(kappa*kappa*(1-kappa), b2)
-      order5 = size(b2, 2) - 4
-
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term1, order1, knot, result1)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
-      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
 
-      result = (result1 + result2 + result3 + result4 + result5)/2
+      result = (result1 + result2 + result3 + result4)/2
    end subroutine matrix_B_plus
 
    subroutine matrix_B_minus(b1, b2, knot, Z, kappa, C, result)
@@ -407,34 +409,28 @@ contains
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5
-      type(mp_real) :: result1, result2, result3, result4, result5
-      integer :: order1, order2, order3, order4, order5
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
 
-      one = '1.d0'
+      term1 = deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2)
+      order1 = size(b1, 2) - 3
 
-      term1 = multiply_elem(-one, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
-      order1 = size(b2, 2) - 4
+      term2 = multiply_elem(-kappa*(1+kappa), b2)
+      order2 = size(b1, 2) - 3
 
-      term2 = multiply_elem(kappa*(1+kappa), deriv_single(b2, size(b2, 2) - 1))
-      order2 = size(b2, 2) - 4
+      term3 = multiply_elem(-kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order3 = size(b1, 2) - 4
 
-      term3 = multiply_elem(-2*kappa*(1+kappa), b2)
-      order3 = size(b2, 2) - 4
+      term4 = multiply_elem(kappa*kappa*(1+kappa), b2)
+      order4 = size(b1, 2) - 4
 
-      term4 = multiply_elem(-kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order4 = size(b2, 2) - 4
-
-      term5 = multiply_elem(-kappa*kappa*(1+kappa), b2)
-      order5 = size(b2, 2) - 4
-
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term1, order1, knot, result1)
+      call integral(deriv_single(b1, size(b1, 2) - 1), size(b1, 2) - 2, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
-      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
 
-      result = (result1 + result2 + result3 + result4 + result5)/2
+      result = (result1 + result2 + result3 + result4)/2
    end subroutine matrix_B_minus
 
    subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, H_mat, S_mat, log_bool, i2, i3)
@@ -464,8 +460,7 @@ contains
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
       type(mp_real), dimension(:), allocatable :: tmp
-      type(mp_real), dimension(:, :), allocatable :: Ss_mat, Phi_mat, T_plus_mat, T_minus_mat, W_plus_mat, W_minus_mat, A_mat, B_plus_mat, B_minus_mat
-      type(mp_real) :: test
+      type(mp_real), dimension(:, :), allocatable :: Ss_mat, Phi_mat, T_plus_mat, T_minus_mat, W_plus_mat, W_minus_mat, A_plus_mat, A_minus_mat, B_plus_mat, B_minus_mat
 
       integer :: i_tmp, j_tmp
 
@@ -487,10 +482,6 @@ contains
       end do
       !OMP END PARALLEL DO
 
-      ! Test Zone : WARNING
-      test = zero
-      call coef_W_plus(bspline(1, :, :), bspline(1, :, :), knot, Z, kappa, C, 4, test)
-      ! END Test Zone
 
       print *, "Generate Small S matrix"
       allocate (Ss_mat(nprime, nprime))
@@ -560,12 +551,23 @@ contains
       !$OMP END PARALLEL DO
 
 
-      print *, "Generate A matrix"
-      allocate (A_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, A_mat, nprime)
+      print *, "Generate A+ matrix"
+      allocate (A_plus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, A_plus_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call matrix_A(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, A_mat(i_tmp, j_tmp))
+          call matrix_A_plus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, A_plus_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+
+      print *, "Generate A- matrix"
+      allocate (A_minus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, A_minus_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+          call matrix_A_minus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, A_minus_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
@@ -599,8 +601,8 @@ contains
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
             H_mat(i_tmp, j_tmp) = c*c*Ss_mat(i_tmp, j_tmp) + 3*T_plus_mat(i_tmp, j_tmp)/2 - Phi_mat(i_tmp, j_tmp) - W_plus_mat(i_tmp, j_tmp)/(4*c*c)
-            H_mat(i_tmp, j_tmp + nprime) = (-A_mat(i_tmp, j_tmp) + B_plus_mat(i_tmp, j_tmp))/(2*c)
-            H_mat(i_tmp + nprime, j_tmp) = (-A_mat(i_tmp, j_tmp) - B_minus_mat(i_tmp, j_tmp))/(2*c)
+            H_mat(i_tmp, j_tmp + nprime) = (-A_plus_mat(i_tmp, j_tmp) + B_plus_mat(i_tmp, j_tmp))/(2*c)
+            H_mat(i_tmp + nprime, j_tmp) = (-A_minus_mat(i_tmp, j_tmp) - B_minus_mat(i_tmp, j_tmp))/(2*c)
             H_mat(i_tmp + nprime, j_tmp + nprime) = -c*c*Ss_mat(i_tmp, j_tmp) - 3*T_minus_mat(i_tmp, j_tmp)/2 - Phi_mat(i_tmp, j_tmp) - W_minus_mat(i_tmp, j_tmp)/(4*c*c)
          end do
       end do
