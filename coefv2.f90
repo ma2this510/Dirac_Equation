@@ -151,297 +151,291 @@ contains
       ! Implicite : order of the max coef is decreased by 1
    end function deriv_single
 
-   subroutine block_H11(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H11
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block H11
+   subroutine evaluate_poly(b, order, x, result)
+      !> @brief Evaluate a polynomial at a point
+      !> @param b : real(:) : the coef of the polynomial
+      !> @param order : integer : the max order of the coef
+      !> @param x : real : the point to evaluate the polynomial
+      !> @param result : real : the result of the evaluation
+      implicit none
+      type(mp_real), intent(in) :: b(:)
+      integer, intent(in) :: order
+      type(mp_real), intent(in) :: x
+      type(mp_real), intent(out) :: result
+
+      integer :: i_tmp
+
+      result = zero
+      do i_tmp = 1, size(b)
+         if (order - i_tmp + 1 /= 0) then
+            if (x /= zero) then
+               result = result + b(i_tmp)*x**(order - i_tmp + 1)
+            end if
+         else 
+            result = result + b(i_tmp)
+         end if
+      end do
+   end subroutine evaluate_poly
+
+   subroutine matrix_S(b1, b2, knot, Z, kappa, C, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7
-      integer :: order1, order2, order3, order4, order5, order6, order7
+      call integral(b1, size(b1, 2) - 1, b2, size(b2, 2) - 1, knot, result)
+   end subroutine matrix_S
 
-      zero = '0.d0'
-      one = '1.d0'
+   subroutine matrix_phi(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
 
-      term1 = multiply_elem(-3*one/4, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order1 = size(b1, 2) - 3
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1
 
-      term2 = multiply_elem(Z/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b1, 2) - 4
+      term1 = multiply_elem(Z, b2)
 
-      term3 = multiply_elem(-Z/(4*C**2), deriv_single(b2, size(b2, 2) - 1))
-      order3 = size(b1, 2) - 4
+      call integral(b1, size(b1, 2) - 1, term1, size(b2, 2) - 2, knot, result)
+   end subroutine matrix_phi
 
-      term4 = multiply_elem(-Z/(4*C**2)*(kappa*(kappa + 2)), b2)
-      order4 = size(b1, 2) - 4
+   subroutine matrix_T_plus(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
 
-      term5 = multiply_elem((3/4)*(kappa*(kappa + 1)), b2)
-      order5 = size(b1, 2) - 3
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2
+      type(mp_real) :: result1, result2
+      integer :: order1, order2
 
-      term6 = multiply_elem(-Z, b2)
-      order6 = size(b1, 2) - 2
+      term1 = deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2)
+      order1 = size(b2, 2) - 3
 
-      term7 = multiply_elem(C**2, b2)
-      order7 = size(b1, 2) - 1
+      term2 = multiply_elem(kappa*(1 + kappa), b2)
+      order2 = size(b2, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
-      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
-      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
-      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
-      call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
-      call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
 
-      result = result1 + result2 + result3 + result4 + result5 + result6 + result7
-   end subroutine block_H11
+      result = (-1)*(result1 - result2)/2
+   end subroutine matrix_T_plus
 
-   subroutine block_H22(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H22
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block H22
+   subroutine matrix_T_minus(b1, b2, knot, Z, kappa, C, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7
-      integer :: order1, order2, order3, order4, order5, order6, order7
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2
+      type(mp_real) :: result1, result2
+      integer :: order1, order2
 
-      zero = '0.d0'
-      one = '1.d0'
+      term1 = deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2)
+      order1 = size(b2, 2) - 3
 
-      term1 = multiply_elem(3*one/4, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order1 = size(b1, 2) - 3
-
-      term2 = multiply_elem(Z/(4*(C**2)), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b1, 2) - 4
-
-      term3 = multiply_elem(-Z/(4*(C**2)), deriv_single(b2, size(b2, 2) - 1))
-      order3 = size(b1, 2) - 4
-
-      term4 = multiply_elem(-Z/(4*(C**2))*(kappa*(kappa - 2)), b2)
-      order4 = size(b1, 2) - 4
-
-      term5 = multiply_elem((kappa*(1 - kappa))*3/4, b2)
-      order5 = size(b1, 2) - 3
-
-      term6 = multiply_elem(-Z, b2)
-      order6 = size(b1, 2) - 2
-
-      term7 = multiply_elem(-(C**2), b2)
-      order7 = size(b1, 2) - 1
+      term2 = multiply_elem(kappa*(1 - kappa), b2)
+      order2 = size(b2, 2) - 3
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
-      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
-      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
-      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
-      call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
-      call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
 
-      result = result1 + result2 + result3 + result4 + result5 + result6 + result7
-   end subroutine block_H22
+      result = (-1)*(result1 + result2)/2
+   end subroutine matrix_T_minus
 
-   subroutine block_H21(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H11
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block H11
+   subroutine matrix_W_plus(b1, b2, knot, Z, kappa, C, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6, term7, term8
-      type(mp_real) :: result1, result2, result3, result4, result5, result6, result7, result8
-      integer :: order1, order2, order3, order4, order5, order6, order7, order8
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
 
-      zero = '0.d0'
-      one = '1.d0'
-
-      term1 = multiply_elem(-Z, deriv_single(b2, size(b2, 2) - 1))
-      order1 = size(b1, 2) - 3
-
-      term2 = multiply_elem((kappa/2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b1, 2) - 4
-
-      term3 = multiply_elem(-(kappa/2)*(kappa*(1 + kappa)), b2)
-      order3 = size(b1, 2) - 4
-
-      term4 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
-      order4 = size(b1, 2) - 3
-
-      term5 = multiply_elem(-Z, b2)
-      order5 = size(b1, 2) - 3
-
-      term6 = multiply_elem(one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
-      order6 = size(b1, 2) - 4
-
-      term7 = multiply_elem(-1/2*(kappa*(kappa + 1)), deriv_single(b2, size(b2, 2) - 1))
-      order7 = size(b1, 2) - 4
-
-      term8 = multiply_elem((kappa*(1 + kappa)), b2)
-      order8 = size(b1, 2) - 4
-
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
-      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
-      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
-      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
-      call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
-      call integral(b1, size(b1, 2) - 1, term7, order7, knot, result7)
-      call integral(b1, size(b1, 2) - 1, term8, order8, knot, result8)
-
-      result = (result1 + result2 + result3 + result4 + result5 + result6 + result7 + result8)/(2*C)
-   end subroutine block_H21
-
-   subroutine block_H12(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block H12
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block H12
-      implicit none
-      type(mp_real), intent(in), dimension(:, :) :: b1, b2
-      type(mp_real), intent(in) :: Z, kappa, C
-      type(mp_real), intent(in) :: knot(:)
-      type(mp_real) :: result
-
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5, term6
-      type(mp_real) :: result1, result2, result3, result4, result5, result6
-      integer :: order1, order2, order3, order4, order5, order6
-
-      zero = '0.d0'
-      one = '1.d0'
-
-      term1 = multiply_elem(kappa/2, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      term1 = multiply_elem(-Z, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
       order1 = size(b1, 2) - 4
 
-      term2 = multiply_elem(kappa*kappa*(1 - kappa)/2, b2)
+      term2 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
       order2 = size(b1, 2) - 4
 
-      term3 = multiply_elem(-Z, b2)
-      order3 = size(b1, 2) - 3
+      term3 = multiply_elem(2*Z*kappa, b2)
+      order3 = size(b1, 2) - 4
 
-      term4 = multiply_elem(-one/2, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
+      term4 = multiply_elem(kappa*kappa*Z, b2)
       order4 = size(b1, 2) - 4
 
-      term5 = multiply_elem(-1*(kappa*(1 - kappa))/2, deriv_single(b2, size(b2, 2) - 1))
-      order5 = size(b1, 2) - 4
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
 
-      term6 = multiply_elem(kappa*(1 - kappa), b2)
-      order6 = size(b1, 2) - 4
+      result = result1 + result2 + result3 + result4
+   end subroutine matrix_W_plus
+
+   subroutine coef_W_plus(b1, b2, knot, Z, kappa, C, order, result)
+      ! Not working yet
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      integer, intent(in) :: order
+      type(mp_real) :: result
+
+      integer :: i_tmp
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1
+      type(mp_real), dimension(size(b1, 1), 2*size(b1, 2)-1) :: produit
+      type(mp_real) :: epsilon, result1, result2
+      integer :: order1, order_tot
+
+      epsilon = zero
+
+      term1 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order1 = size(b2, 2) - 3
+      call evaluate_poly(term1(order, :), order1, epsilon, result1)
+      call mpwrite(6, 50, 30, result1)
+
+      call evaluate_poly(b1(order, :), size(b1, 2) - 1, epsilon, result2)
+      call mpwrite(6, 50, 30, result2)
+
+      produit = zero
+      order_tot = (size(b1, 2) - 1) * order1
+      do i_tmp = 1, size(b1, 1) ! Loop over the number of Piecewise polynomial
+         produit(i_tmp, :) = fusion_coef(b1(i_tmp, :), term1(i_tmp, :))
+      end do
+      print *, "Eval poly"
+
+      print *, "Order tot = ", order_tot
+      call write_lists(produit(order, :), 6, 50, 30)
+
+      call evaluate_poly(produit(order, :), order_tot, epsilon, result)
+      call mpwrite(6, 50, 30, result)
+   end subroutine coef_W_plus
+
+   subroutine matrix_W_minus(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4
+      type(mp_real) :: result1, result2, result3, result4
+      integer :: order1, order2, order3, order4
+
+      term1 = multiply_elem(-Z, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order1 = size(b1, 2) - 4
+
+      term2 = multiply_elem(Z, deriv_single(b2, size(b2, 2) - 1))
+      order2 = size(b1, 2) - 4
+
+      term3 = multiply_elem(-2*Z*kappa, b2)
+      order3 = size(b1, 2) - 4
+
+      term4 = multiply_elem(kappa*kappa*Z, b2)
+      order4 = size(b1, 2) - 4
+
+      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
+      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
+      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
+
+      result = result1 + result2 + result3 + result4
+   end subroutine matrix_W_minus
+
+   subroutine matrix_A(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1
+
+      term1 = multiply_elem(Z, b2)
+
+      call integral(b1, size(b1, 2) - 1, term1, size(b2, 2) - 3, knot, result)
+   end subroutine matrix_A
+
+   subroutine matrix_B_plus(b1, b2, knot, Z, kappa, C, result)
+      implicit none
+      type(mp_real), intent(in), dimension(:, :) :: b1, b2
+      type(mp_real), intent(in) :: Z, kappa, C
+      type(mp_real), intent(in) :: knot(:)
+      type(mp_real) :: result
+
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5
+      type(mp_real) :: result1, result2, result3, result4, result5
+      integer :: order1, order2, order3, order4, order5
+
+      one = '1.d0'
+
+      term1 = multiply_elem(-one, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
+      order1 = size(b2, 2) - 4
+
+      term2 = multiply_elem(-kappa*(1-kappa), deriv_single(b2, size(b2, 2) - 1))
+      order2 = size(b2, 2) - 4
+
+      term3 = multiply_elem(2*kappa*(1-kappa), b2)
+      order3 = size(b2, 2) - 4
+
+      term4 = multiply_elem(kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order4 = size(b2, 2) - 4
+
+      term5 = multiply_elem(kappa*kappa*(1-kappa), b2)
+      order5 = size(b2, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
       call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
       call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
-      call integral(b1, size(b1, 2) - 1, term6, order6, knot, result6)
 
-      result = (result1 + result2 + result3 + result4 + result5 + result6)/(2*C)
-   end subroutine block_H12
+      result = (result1 + result2 + result3 + result4 + result5)/2
+   end subroutine matrix_B_plus
 
-   subroutine block_S11(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block S11
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block S11
+   subroutine matrix_B_minus(b1, b2, knot, Z, kappa, C, result)
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
       type(mp_real), intent(in) :: knot(:)
       type(mp_real) :: result
 
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3
-      type(mp_real) :: result1, result2, result3
-      integer :: order1, order2, order3
+      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3, term4, term5
+      type(mp_real) :: result1, result2, result3, result4, result5
+      integer :: order1, order2, order3, order4, order5
 
-      zero = '0.d0'
       one = '1.d0'
 
-      term1 = b2
-      order1 = size(b2, 2) - 1
+      term1 = multiply_elem(-one, deriv_single(deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2), size(b2, 2) - 3))
+      order1 = size(b2, 2) - 4
 
-      term2 = multiply_elem(-1/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b2, 2) - 3
+      term2 = multiply_elem(kappa*(1+kappa), deriv_single(b2, size(b2, 2) - 1))
+      order2 = size(b2, 2) - 4
 
-      term3 = multiply_elem(kappa*(1 + kappa)/(4*C**2), b2)
-      order3 = size(b2, 2) - 3
+      term3 = multiply_elem(-2*kappa*(1+kappa), b2)
+      order3 = size(b2, 2) - 4
+
+      term4 = multiply_elem(-kappa, deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
+      order4 = size(b2, 2) - 4
+
+      term5 = multiply_elem(-kappa*kappa*(1+kappa), b2)
+      order5 = size(b2, 2) - 4
 
       call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
       call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
       call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
+      call integral(b1, size(b1, 2) - 1, term4, order4, knot, result4)
+      call integral(b1, size(b1, 2) - 1, term5, order5, knot, result5)
 
-      result = result1 + result2 + result3
-   end subroutine block_S11
-
-   subroutine block_S22(b1, b2, knot, Z, kappa, C, result)
-      !> @brief Calculate the block S22
-      !> @param b1 : real(:,:) : the coef of the first B-spline
-      !> @param b2 : real(:,:) : the coef of the second B-spline
-      !> @param knot : real(:) : the knot vector
-      !> @param Z : real : the potential constant
-      !> @param kappa : real : the relativistic quantum number
-      !> @param C : real : the speed of light
-      !> @param result : real : the result of the block S22
-      implicit none
-      type(mp_real), intent(in), dimension(:, :) :: b1, b2
-      type(mp_real), intent(in) :: Z, kappa, C
-      type(mp_real), intent(in) :: knot(:)
-      type(mp_real) :: result
-
-      type(mp_real), dimension(size(b1, 1), size(b1, 2)) :: term1, term2, term3
-      type(mp_real) :: result1, result2, result3
-      integer :: order1, order2, order3
-
-      zero = '0.d0'
-      one = '1.d0'
-
-      term1 = b2
-      order1 = size(b2, 2) - 1
-
-      term2 = multiply_elem(-1/(4*C**2), deriv_single(deriv_single(b2, size(b2, 2) - 1), size(b2, 2) - 2))
-      order2 = size(b2, 2) - 3
-
-      term3 = multiply_elem(-kappa*(1 - kappa)/(4*C**2), b2)
-      order3 = size(b2, 2) - 3
-
-      call integral(b1, size(b1, 2) - 1, term1, order1, knot, result1)
-      call integral(b1, size(b1, 2) - 1, term2, order2, knot, result2)
-      call integral(b1, size(b1, 2) - 1, term3, order3, knot, result3)
-
-      result = result1 + result2 + result3
-   end subroutine block_S22
+      result = (result1 + result2 + result3 + result4 + result5)/2
+   end subroutine matrix_B_minus
 
    subroutine matrixAB(d, n, n_remove, Z, kappa, C, amin, amax, H_mat, S_mat, log_bool, i2, i3)
       !> @brief Generate the matrix A and B
@@ -470,7 +464,8 @@ contains
       type(mp_real), dimension(n + d) :: knot
       type(mp_real), dimension(n, size(knot), d) :: bspline
       type(mp_real), dimension(:), allocatable :: tmp
-      type(mp_real), dimension(:, :), allocatable :: H11_mat, H12_mat, H21_mat, H22_mat, S11_mat, S22_mat
+      type(mp_real), dimension(:, :), allocatable :: Ss_mat, Phi_mat, T_plus_mat, T_minus_mat, W_plus_mat, W_minus_mat, A_mat, B_plus_mat, B_minus_mat
+      type(mp_real) :: test
 
       integer :: i_tmp, j_tmp
 
@@ -492,83 +487,121 @@ contains
       end do
       !OMP END PARALLEL DO
 
-      ! Generate the H11 matrix
-      print *, "Generate H11 matrix"
-      allocate (H11_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H11_mat, nprime)
+      ! Test Zone : WARNING
+      test = zero
+      call coef_W_plus(bspline(1, :, :), bspline(1, :, :), knot, Z, kappa, C, 4, test)
+      ! END Test Zone
+
+      print *, "Generate Small S matrix"
+      allocate (Ss_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, Ss_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call block_H11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H11_mat(i_tmp, j_tmp))
+          call matrix_S(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, Ss_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
-      ! Generate the H22 matrix
-      print *, "Generate H22 matrix"
-      allocate (H22_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H22_mat, nprime)
+
+      print *, "Generate Phi matrix"
+      allocate (Phi_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, Phi_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call block_H22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H22_mat(i_tmp, j_tmp))
+          call matrix_phi(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, Phi_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
-      ! Generate the H12 matrix
+
       ! Warning for now cause singularities thus use transpose of H21 instead
-      ! print *, "Generate H12 matrix"
-      ! allocate (H12_mat(nprime, nprime))
-      ! !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H12_mat, nprime)
-      ! do i_tmp = 1, nprime
-      !    do j_tmp = 1, nprime
-      !     call block_H12(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H12_mat(i_tmp, j_tmp))
-      !    end do
-      ! end do
-      ! !$OMP END PARALLEL DO
-
-      ! Generate the H21 matrix
-      print *, "Generate H21 matrix"
-      allocate (H21_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, H21_mat, nprime)
+      print *, "Generate T+ matrix"
+      allocate (T_plus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, T_plus_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call block_H21(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, H21_mat(i_tmp, j_tmp))
+          call matrix_T_plus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, T_plus_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
-      ! Generate the S11 matrix
-      print *, "Generate S11 matrix"
-      allocate (S11_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, S11_mat, nprime)
+
+      ! Warning for now cause singularities thus use transpose of H21 instead
+      print *, "Generate T- matrix"
+      allocate (T_minus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, T_minus_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call block_S11(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S11_mat(i_tmp, j_tmp))
+          call matrix_T_minus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, T_minus_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
 
-      ! Generate the S22 matrix
-      print *, "Generate S22 matrix"
-      allocate (S22_mat(nprime, nprime))
-      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, S22_mat, nprime)
+
+      print *, "Generate W+ matrix"
+      allocate (W_plus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, W_plus_mat, nprime)
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-          call block_S22(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, S22_mat(i_tmp, j_tmp))
+          call matrix_W_plus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, W_plus_mat(i_tmp, j_tmp))
          end do
       end do
       !$OMP END PARALLEL DO
+
+
+      print *, "Generate W- matrix"
+      allocate (W_minus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, W_minus_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+          call matrix_W_minus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, W_minus_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+
+      print *, "Generate A matrix"
+      allocate (A_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, A_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+          call matrix_A(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, A_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+
+      print *, "Generate B+ matrix"
+      allocate (B_plus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, B_plus_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+          call matrix_B_plus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, B_plus_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
+
+      print *, "Generate B+ matrix"
+      allocate (B_minus_mat(nprime, nprime))
+      !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, B_minus_mat, nprime)
+      do i_tmp = 1, nprime
+         do j_tmp = 1, nprime
+          call matrix_B_minus(bspline(i_tmp + n_remove, :, :), bspline(j_tmp + n_remove, :, :), knot, Z, kappa, C, B_minus_mat(i_tmp, j_tmp))
+         end do
+      end do
+      !$OMP END PARALLEL DO
+
 
       ! Generate the matrix H
       print *, "Generate H matrix"
       allocate (H_mat(2*nprime, 2*nprime))
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            H_mat(i_tmp, j_tmp) = H11_mat(i_tmp, j_tmp)
-            H_mat(i_tmp, j_tmp + nprime) = H21_mat(j_tmp, i_tmp) ! Transpose
-            ! H_mat(i_tmp, j_tmp + nprime) = H12_mat(i_tmp, j_tmp)
-            H_mat(i_tmp + nprime, j_tmp) = H21_mat(i_tmp, j_tmp)
-            H_mat(i_tmp + nprime, j_tmp + nprime) = H22_mat(i_tmp, j_tmp)
+            H_mat(i_tmp, j_tmp) = c*c*Ss_mat(i_tmp, j_tmp) + 3*T_plus_mat(i_tmp, j_tmp)/2 - Phi_mat(i_tmp, j_tmp) - W_plus_mat(i_tmp, j_tmp)/(4*c*c)
+            H_mat(i_tmp, j_tmp + nprime) = (-A_mat(i_tmp, j_tmp) + B_plus_mat(i_tmp, j_tmp))/(2*c)
+            H_mat(i_tmp + nprime, j_tmp) = (-A_mat(i_tmp, j_tmp) - B_minus_mat(i_tmp, j_tmp))/(2*c)
+            H_mat(i_tmp + nprime, j_tmp + nprime) = -c*c*Ss_mat(i_tmp, j_tmp) - 3*T_minus_mat(i_tmp, j_tmp)/2 - Phi_mat(i_tmp, j_tmp) - W_minus_mat(i_tmp, j_tmp)/(4*c*c)
          end do
       end do
 
@@ -577,10 +610,10 @@ contains
       allocate (S_mat(2*nprime, 2*nprime))
       do i_tmp = 1, nprime
          do j_tmp = 1, nprime
-            S_mat(i_tmp, j_tmp) = S11_mat(i_tmp, j_tmp)
+            S_mat(i_tmp, j_tmp) = Ss_mat(i_tmp, j_tmp) + T_plus_mat(i_tmp, j_tmp)/(2*c*c)
             S_mat(i_tmp, j_tmp + nprime) = zero
             S_mat(i_tmp + nprime, j_tmp) = zero
-            S_mat(i_tmp + nprime, j_tmp + nprime) = S22_mat(i_tmp, j_tmp)
+            S_mat(i_tmp + nprime, j_tmp + nprime) = Ss_mat(i_tmp, j_tmp) + T_minus_mat(i_tmp, j_tmp)/(2*c*c)
          end do
       end do
 
@@ -588,34 +621,24 @@ contains
          print *, "Writing Logs"
          open (1, file="log_2.log", status="replace")
 
-         allocate (tmp(nprime))
+         allocate (tmp(2*nprime))
 
          write (1, '(a,i4)') "Number of BSplines: ", n
          write (1, '(a,i4)') "Order of BSplines: ", d, " and number of knots: ", size(knot)
          write (1, '(a)') "Knots: "
          call write_lists(knot, 1, i2, i3)
-         ! write (1, '(a)') "----------------------------------------------------------------"
-         ! write (1, '(a)') "Matrix H12 : "
-         ! do i_tmp = 1, nprime
-         !    call write_lists(H12_mat(i_tmp, :), 1, i2, i3)
-         ! end do
-         write (1, '(a)') "----------------------------------------------------------------"
-         write (1, '(a)') "Matrix H21 : "
-         do i_tmp = 1, nprime
-            call write_lists(H21_mat(i_tmp, :), 1, i2, i3)
-         end do
-         ! write (1, '(a)') "----------------------------------------------------------------"
-         ! write (1, '(a)') "Matrix H12 - H21^T: "
-         ! do i_tmp = 1, nprime
-         !    do j_tmp = 1, nprime
-         !       tmp(j_tmp) = H12_mat(i_tmp, j_tmp) - H21_mat(j_tmp, i_tmp)
-         !    end do
-         !    call write_lists(tmp, 1, i2, i3)
-         ! end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix H : "
          do i_tmp = 1, 2*nprime
             call write_lists(H_mat(i_tmp, :), 1, i2, i3)
+         end do
+         write (1, '(a)') "----------------------------------------------------------------"
+         write (1, '(a)') "Check H symmetry : "
+         do i_tmp = 1, 2*nprime
+            do j_tmp = 1, 2*nprime
+               tmp(j_tmp) = H_mat(j_tmp, i_tmp) - H_mat(i_tmp, j_tmp)
+            end do
+            call write_lists(tmp, 1, i2, i3)
          end do
          write (1, '(a)') "----------------------------------------------------------------"
          write (1, '(a)') "Matrix S : "
