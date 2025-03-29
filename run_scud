@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH --job-name=dkb_conv
+#SBATCH -t 60:00:00
+#SBATCH -p max_120_hours
+#SBATCH -n 24
+#SBATCH -w scud
+#SBATCH --mail-type=ALL
+
+hostname
+make main.out
+export OMP_NUM_THREADS=$SLURM_TASKS_PER_NODE
+time ./main.out
