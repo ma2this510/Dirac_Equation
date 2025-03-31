@@ -715,7 +715,7 @@ contains
 
       print *, "Errors written to ", log_file
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, ".txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, "_1.txt"
 
       open (2, file=log_file)
 
