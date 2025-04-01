@@ -12,9 +12,9 @@ program main
 
    !-----------------------------------------------------------------!
    ! Define Important Variables
-   d = 10 ! Order of Mathemathica + 1
+   d = 5 ! Order of Mathemathica + 1
    nmin = 20 ! Number minimal of B-Spline
-   nmax = 200 ! Number minimal of B-Spline
+   nmax = 500 ! Number minimal of B-Spline
    step = 10 ! Number of Intermedier n
    n_remove = 1 ! Number of Bspline to remove at the start and the end
    Z = '2.d0'
