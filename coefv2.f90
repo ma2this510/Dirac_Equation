@@ -782,7 +782,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_2.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_1.txt"
 
       open (2, file=log_file)
 
