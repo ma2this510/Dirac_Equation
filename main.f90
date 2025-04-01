@@ -20,13 +20,8 @@ program main
    Z = '2.d0'
    C = '137.0359895d0' ! check CODATA 1986
    kappa = '-1.d0'
-<<<<<<< HEAD
-   amin = '1.d-5'
-   amax = '1.d3'
-=======
    amin = '1.d-6'
    amax = '2.d2'
->>>>>>> 51d11127550df7f42c11df405573d714c4d0fe65
    !-----------------------------------------------------------------!
 
    print *, 'Theoric Value for n = 1:'
