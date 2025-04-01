@@ -16,6 +16,11 @@ module bspline_mod
 contains
 
    function theoric_val(n, Z, kappa, C)
+      !> @brief Calculate the theoretical value for a hydrogenoid atom
+      !> @param n : integer : the principal quantum number
+      !> @param Z : mp_real : number of protons in the nucleus
+      !> @param kappa : mp_real : the relativistic quantum number
+      !> @param C : mp_real : the speed of light
       implicit none
       integer, intent(in) :: n
       type(mp_real), intent(in) :: Z, kappa, C
@@ -178,6 +183,14 @@ contains
    end subroutine evaluate_poly
 
    subroutine matrix_S(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the overlap matrix S (the little S matrix from Maen's notation)
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus (not used)
+      !> @param kappa : real : the relativistic quantum number (not used)
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the overlap matrix
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -188,6 +201,14 @@ contains
    end subroutine matrix_S
 
    subroutine matrix_phi(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix phi
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus
+      !> @param kappa : real : the relativistic quantum number (not used)
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix phi
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -202,6 +223,14 @@ contains
    end subroutine matrix_phi
 
    subroutine matrix_T_plus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix T+
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus (not used)
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix T+
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -225,6 +254,14 @@ contains
    end subroutine matrix_T_plus
 
    subroutine matrix_T_minus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix T-
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus (not used)
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix T-
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -248,6 +285,14 @@ contains
    end subroutine matrix_T_minus
 
    subroutine matrix_W_plus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix W+
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix W+
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -279,6 +324,14 @@ contains
    end subroutine matrix_W_plus
 
    subroutine matrix_W_minus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix W-
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix W-
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -310,6 +363,14 @@ contains
    end subroutine matrix_W_minus
 
    subroutine matrix_A_plus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix A+
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix A+
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -341,6 +402,14 @@ contains
    end subroutine matrix_A_plus
 
    subroutine matrix_A_minus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix A-
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix A-
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -372,6 +441,14 @@ contains
    end subroutine matrix_A_minus
 
    subroutine matrix_B_plus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix B+
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus (not used)
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix B+
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -403,6 +480,14 @@ contains
    end subroutine matrix_B_plus
 
    subroutine matrix_B_minus(b1, b2, knot, Z, kappa, C, result)
+      !> @brief Calculate the matrix B-
+      !> @param b1 : real(:, :) : the coef of the first B-spline
+      !> @param b2 : real(:, :) : the coef of the second B-spline
+      !> @param knot : real(:) : the knot vector
+      !> @param Z : real : number of protons in the nucleus (not used)
+      !> @param kappa : real : the relativistic quantum number
+      !> @param C : real : the speed of light (not used)
+      !> @param result : real : the result of the matrix B-
       implicit none
       type(mp_real), intent(in), dimension(:, :) :: b1, b2
       type(mp_real), intent(in) :: Z, kappa, C
@@ -444,7 +529,7 @@ contains
       !> @param amin : mp_real : the minimum value of the knot vector
       !> @param amax : mp_real : the maximum value of the knot vector
       !> @param H_mat : mp_real(2*nprime,2*nprime) : the matrix H
-      !> @param H_mat : mp_real(2*nprime,2*nprime) : the matrix S
+      !> @param S_mat : mp_real(2*nprime,2*nprime) : the matrix S
       !> @param log_bool : logical : display the result
       !> @param i2 : integer : the field width
       !> @param i3 : integer : the number of decimal
@@ -505,7 +590,6 @@ contains
       !$OMP END PARALLEL DO
 
 
-      ! Warning for now cause singularities thus use transpose of H21 instead
       print *, "Generate T+ matrix"
       allocate (T_plus_mat(nprime, nprime))
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, T_plus_mat, nprime)
@@ -517,7 +601,6 @@ contains
       !$OMP END PARALLEL DO
 
 
-      ! Warning for now cause singularities thus use transpose of H21 instead
       print *, "Generate T- matrix"
       allocate (T_minus_mat(nprime, nprime))
       !$OMP PARALLEL DO COLLAPSE(2) PRIVATE(i_tmp, j_tmp) SHARED(bspline, knot, Z, kappa, C, T_minus_mat, nprime)
@@ -653,6 +736,19 @@ contains
    end subroutine matrixAB
 
    subroutine get_eigen(d, n, n_remove, Z, kappa, C, amin, amax, log_bool, i2, i3)
+      !> @brief Main routine to create the B-spline, the Hamiltonian, the overlap matrix and solve the eigenvalue problem
+      !> @param d : integer : the degree of the B-spline
+      !> @param n : integer : the number of B-splines
+      !> @param n_remove : integer : the number of B-splines to be remove at the start and the end
+      !> @param Z : mp_real : number of protons in the nucleus
+      !> @param kappa : mp_real : the relativistic quantum number
+      !> @param C : mp_real : the speed of light
+      !> @param amin : mp_real : the minimum value of the knot vector
+      !> @param amax : mp_real : the maximum value of the knot vector
+      !> @param log_bool : logical : display the result
+      !> @param i2 : integer : the field width
+      !> @param i3 : integer : the number of decimal
+      implicit none
       integer, intent(in) :: d, n, n_remove, i2, i3
       type(mp_real), intent(in) :: Z, kappa, C, amin, amax
       logical, intent(in), optional :: log_bool
@@ -686,7 +782,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_2.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_1.txt"
 
       open (2, file=log_file)
 
@@ -715,11 +811,7 @@ contains
 
       print *, "Errors written to ", log_file
 
-<<<<<<< HEAD
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, "_2.txt"
-=======
       write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, "_1.txt"
->>>>>>> 51d11127550df7f42c11df405573d714c4d0fe65
 
       open (2, file=log_file)
 
