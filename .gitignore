@@ -36,3 +36,7 @@
 
 # Temporary files
 @eaDir/
+
+# Doxygen directories
+html/
+latex/
