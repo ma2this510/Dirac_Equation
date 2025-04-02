@@ -691,7 +691,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_800/error_", n, "_", d, "_-12_2.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_spurious/error_", n, "_", d, "_5.txt"
 
       open (2, file=log_file, status="replace")
 
@@ -708,11 +708,38 @@ contains
       call mpwrite(2, i2, i3, amax)
       write (2, '(a)') "--------------------------------------------------------------"
 
-      solnum = 1
+      solnum = 4+1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) < zero .AND. abs(w(i_tmp)) < 1.d3*one) then
             call mpwrite(2, i2, i3, abs(w(i_tmp)-theoric_val(solnum,Z,kappa,C)))
             solnum = solnum + 1
+         end if
+      end do
+
+      close (2)
+
+      print *, "Errors written to ", log_file
+
+      write (log_file, '(a,I4,a,I2,a)') "./result_spurious/eigenvalues_", n, "_", d, "_5.txt"
+
+      open (2, file=log_file)
+
+      write (2, '(a, i4, a, i4, a, i4)') "Number of BSplines: ", n, ", Order of BSplines: ", d, ", Removed Bsplines", n_remove
+      write (2, '(a)') "Speed of light: "
+      call mpwrite(2, i2, i3, C)
+      write (2, '(a)') "Relativistic quantum number: "
+      call mpwrite(2, i2, i3, kappa)
+      write (2, '(a)') "Potential constant: "
+      call mpwrite(2, i2, i3, Z)
+      write (2, '(a)') "Knot min: "
+      call mpwrite(2, i2, i3, amin)
+      write (2, '(a)') "Knot max: "
+      call mpwrite(2, i2, i3, amax)
+      write (2, '(a)') "--------------------------------------------------------------"
+
+      do i_tmp = 1, 2*nprime
+         if (w(i_tmp)< zero .AND. abs(w(i_tmp)) < 1.d3*one) then
+            call mpwrite(2, i2, i3, w(i_tmp))
          end if
       end do
 

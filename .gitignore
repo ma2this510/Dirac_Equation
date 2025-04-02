@@ -36,3 +36,7 @@
 
 # Logical Directories
 @eaDir/
+
+# Doxygen Directories
+latex/
+html/
