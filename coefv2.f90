@@ -782,7 +782,7 @@ contains
 
       print *, "Error code: ", ierr
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/error_", n, "_", d, "_1.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_spurious/error_", n, "_", d, "_5.txt"
 
       open (2, file=log_file)
 
@@ -799,7 +799,7 @@ contains
       call mpwrite(2, i2, i3, amax)
       write (2, '(a)') "--------------------------------------------------------------"
 
-      solnum = 1
+      solnum = 5+1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp) - c**2) < 1.d3*one) then
             call mpwrite(2, i2, i3, abs(w(i_tmp) - theoric_val(solnum, Z, kappa, C)))
@@ -811,7 +811,7 @@ contains
 
       print *, "Errors written to ", log_file
 
-      write (log_file, '(a,I4,a,I2,a)') "./result_DKB/eigenvalues_", n, "_", d, "_1.txt"
+      write (log_file, '(a,I4,a,I2,a)') "./result_spurious/eigenvalues_", n, "_", d, "_5.txt"
 
       open (2, file=log_file)
 
@@ -828,11 +828,9 @@ contains
       call mpwrite(2, i2, i3, amax)
       write (2, '(a)') "--------------------------------------------------------------"
 
-      solnum = 1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp) - c**2) < 1.d3*one) then
             call mpwrite(2, i2, i3, w(i_tmp) - C**2)
-            solnum = solnum + 1
          end if
       end do
 
