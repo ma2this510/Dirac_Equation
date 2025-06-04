@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=dkb_conv
+#SBATCH --job-name=dkb_H
 #SBATCH -t 24:00:00
 #SBATCH -p max_24_hours
 #SBATCH -n 64
 #SBATCH -w roland
-#SBATCH --mail-type=ALL
 
 hostname
 export OMP_NUM_THREADS=$SLURM_TASKS_PER_NODE
+make main.out
+echo "Setup Builded - Running the program"
 time ./main.out
