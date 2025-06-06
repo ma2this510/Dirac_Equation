@@ -799,7 +799,7 @@ contains
       call mpwrite(2, i2, i3, amax)
       write (2, '(a)') "--------------------------------------------------------------"
 
-      solnum = 5+1
+      solnum = 1
       do i_tmp = 1, 2*nprime
          if (w(i_tmp) - C**2 < zero .AND. abs(w(i_tmp) - c**2) < 1.d3*one) then
             call mpwrite(2, i2, i3, abs(w(i_tmp) - theoric_val(solnum, Z, kappa, C)))
