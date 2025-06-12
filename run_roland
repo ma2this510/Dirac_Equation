@@ -5,8 +5,10 @@
 #SBATCH -n 64
 #SBATCH -w roland
 
+source ~/.bashrc
 hostname
 export OMP_NUM_THREADS=$SLURM_TASKS_PER_NODE
 make main.out
 echo "Setup Builded - Running the program"
 time ./main.out
+push "SLURM job Finished"
